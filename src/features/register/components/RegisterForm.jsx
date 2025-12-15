@@ -35,12 +35,17 @@ export default function RegisterForm() {
   const onSubmit = async (data) => {
     try {
       await registerUser(data);
-      addToast("¡Registro exitoso! Bienvenido a BioTech Farm.", "success");
+      addToast(
+        "¡Registro exitoso! Conexión con microservicios establecida correctamente.",
+        "success"
+      );
       navigate("/farm-selector");
     } catch (err) {
       console.error("Register error:", err);
       // The hook sets the error state, but we can also toast immediately
-      const msg = err.response?.data?.message || "Error al crear la cuenta";
+      const msg =
+        err.response?.data?.message ||
+        "Error: No se está conectando con el microservicio de backend";
       addToast(msg, "error");
     }
   };
