@@ -4,7 +4,7 @@ export const loginService = {
   login: async (credentials) => {
     try {
       // Llamar al backend con el formato esperado: { email, password }
-      const response = await apiClient.post('/auth/login', {
+      const response = await apiClient.post('/Auth/login', {
         email: credentials.email,
         password: credentials.password
       })
