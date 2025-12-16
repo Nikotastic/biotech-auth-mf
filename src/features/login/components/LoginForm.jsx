@@ -27,22 +27,29 @@ export default function LoginForm() {
 
       // Check if user has farms
       try {
-        const farms = await farmService.getUserFarms(loginData.token);
+        const farms = await farmService.getUserFarms(
+          loginData.token,
+          loginData.user.id
+        );
         if (farms && farms.length > 0) {
           // If user has farms, go to selector
           addToast(
             `📊 Se encontraron ${farms.length} granja(s) disponible(s)`,
             "success"
           );
-          navigate("/farm-selector");
         } else {
           // If you do not have farms, go to selector to create one
           addToast(
             "ℹ️ No tienes granjas registradas. Vamos a crear una.",
             "info"
           );
-          navigate("/farm-selector");
         }
+
+        // Esperar a que Zustand persista y las alertas se muestren
+        await new Promise((resolve) => setTimeout(resolve, 600));
+
+        // Forzar navegación completa para cargar el shell con Layout
+        window.location.href = "/farm-selector";
       } catch (farmError) {
         // If loading farms fails, go to farm-selector by default
         console.error("Error al verificar granjas:", farmError);
@@ -50,7 +57,8 @@ export default function LoginForm() {
           "⚠️ No se pudieron cargar las granjas. Redirigiendo...",
           "warning"
         );
-        navigate("/farm-selector");
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        window.location.href = "/farm-selector";
       }
     } catch (err) {
       console.error("Login error:", err);
