@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { farmService } from '../services/farmService'
-import { useAuthStore } from '../../../shared/store/authStore'
+import { useAuthStore } from '@shared/store/authStore'
 
 export const useFarms = () => {
   const [farms, setFarms] = useState([])

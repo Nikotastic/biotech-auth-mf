@@ -5,15 +5,22 @@ import {
   TrendingUp, AlertCircle
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useAuthStore } from '../../../shared/store/authStore'
+import { useAuthStore } from '@shared/store/authStore'
+import { useToastStore } from '@shared/store/toastStore'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user, selectedFarm, logout } = useAuthStore()
+  const addToast = useToastStore((state) => state.addToast)
 
   const handleLogout = () => {
-    logout()
-    window.location.href = '/'
+    addToast("👋 Sesión cerrada. ¡Hasta pronto!", "success")
+    setTimeout(() => {
+      logout()
+      // Notify authentication change to sync
+      window.dispatchEvent(new Event("auth-change"))
+      window.location.href = '/'
+    }, 500)
   }
 
   const modules = [

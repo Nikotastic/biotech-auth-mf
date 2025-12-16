@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Building2, Check, MapPin, Users, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useAuthStore } from '../../../shared/store/authStore'
+import { useAuthStore } from '@shared/store/authStore'
+import { useToastStore } from '@shared/store/toastStore'
 
 export default function FarmSelector() {
   const navigate = useNavigate()
   const { setSelectedFarm } = useAuthStore()
+  const addToast = useToastStore((state) => state.addToast)
   const [selectedFarm, setSelectedFarmLocal] = useState('1')
 
   // Mock farms para pruebas
@@ -42,13 +44,19 @@ export default function FarmSelector() {
   }
 
   const onSelectFarm = (farmId) => {
-    if (!farmId) return
+    if (!farmId) {
+      addToast("⚠️ Por favor selecciona una granja", "warning")
+      return
+    }
     const farm = farms.find(f => f.id === farmId)
     if (farm) {
       setSelectedFarm(farm)
+      addToast(`✅ Granja "${farm.name}" seleccionada correctamente`, "success")
       setTimeout(() => {
         navigate('/dashboard')
       }, 300)
+    } else {
+      addToast("❌ Error al seleccionar la granja", "error")
     }
   }
 

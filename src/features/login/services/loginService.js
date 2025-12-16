@@ -1,18 +1,18 @@
-import apiClient from '../../../shared/utils/apiClient'
+import apiClient from '@shared/utils/apiClient'
 
 export const loginService = {
   login: async (credentials) => {
     try {
-      // Llamar al backend con el formato esperado: { email, password }
+      // Call the backend with the expected format: { email, password }
       const response = await apiClient.post('/Auth/login', {
         email: credentials.email,
         password: credentials.password
       })
       
-      // Backend retorna: { token, expiration, userId, email, fullName }
+      // Backend returns: { token, expiration, userId, email, fullName }
       const { token, userId, email, fullName } = response.data
       
-      // Adaptar al formato que espera el frontend
+      // Adapt to the format expected by the frontend
       return {
         token,
         user: {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { loginService } from "../services/loginService";
-import { useAuthStore } from "../../../shared/store/authStore";
+import { useAuthStore } from "@shared/store/authStore";
 
 export const useLogin = () => {
   const [loading, setLoading] = useState(false);

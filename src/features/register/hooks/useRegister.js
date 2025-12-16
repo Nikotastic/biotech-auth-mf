@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { registerService } from '../services/registerService'
-import { useAuthStore } from '../../../shared/store/authStore'
+import { useAuthStore } from '@shared/store/authStore'
 
 export const useRegister = () => {
   const [loading, setLoading] = useState(false)
@@ -14,10 +14,10 @@ export const useRegister = () => {
     try {
       const response = await registerService(userData)
       
-      // Guardar en el store: setAuth(user, token)
+      // Save to store: setAuth(user, token)
       setAuth(response.user, response.token)
       
-      // Notificar cambio de autenticación
+      // Notify authentication change
       window.dispatchEvent(new Event('auth-change'))
       
       return response

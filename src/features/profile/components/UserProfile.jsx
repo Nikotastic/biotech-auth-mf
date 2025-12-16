@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { User, Mail, Shield, Calendar, LogOut, Settings, Building2, Edit2, Lock } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useProfile } from '../hooks/useProfile'
-import { useAuthStore } from '../../../shared/store/authStore'
+import { useAuthStore } from '@shared/store/authStore'
+import { useToastStore } from '@shared/store/toastStore'
 
 export default function UserProfile() {
   const navigate = useNavigate()
   const { profile, logout, isAuthenticated } = useProfile()
   const { selectedFarm } = useAuthStore()
+  const addToast = useToastStore((state) => state.addToast)
   const [showEditModal, setShowEditModal] = useState(false)
 
   useEffect(() => {
@@ -18,7 +20,10 @@ export default function UserProfile() {
   }, [isAuthenticated, navigate])
 
   const handleLogout = () => {
-    logout()
+    addToast("👋 Cerrando sesión...", "info")
+    setTimeout(() => {
+      logout()
+    }, 500)
   }
 
   const handleBackToDashboard = () => {

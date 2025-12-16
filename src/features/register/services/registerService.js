@@ -1,27 +1,27 @@
-import apiClient from '../../../shared/utils/apiClient'
+import apiClient from '@shared/utils/apiClient'
 
 export const registerService = async (userData) => {
   try {
-    // Llamar al backend con el formato esperado: { fullName, email, password }
+    // Call the backend with the expected format: { fullName, email, password }
     const response = await apiClient.post('/Auth/register', {
       fullName: userData.name || userData.fullName,
       email: userData.email,
       password: userData.password
     })
     
-    // Backend retorna { id: userId } con status 201
+    // Backend returns { id: userId } with status 201
     const userId = response.data.id || response.data
     
-    // Auto-login después del registro
+    // Auto-login after registration
     const loginResponse = await apiClient.post('/Auth/login', {
       email: userData.email,
       password: userData.password
     })
     
-    // Backend retorna: { token, expiration, userId, email, fullName }
+    // Backend returns: { token, expiration, userId, email, fullName }
     const { token, userId: loginUserId, email, fullName } = loginResponse.data
     
-    // Adaptar al formato que espera el frontend
+    // Adapt to the format expected by the frontend
     return {
       token,
       user: {

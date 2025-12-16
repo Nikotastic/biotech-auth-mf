@@ -13,7 +13,7 @@ import {
 import { motion } from "framer-motion";
 import { useRegister } from "../hooks/useRegister";
 import { registerSchema } from "../validations/registerSchema";
-import { useToastStore } from "../../../shared/store/toastStore";
+import { useToastStore } from "@shared/store/toastStore";
 
 export default function RegisterForm() {
   const navigate = useNavigate();
@@ -36,17 +36,41 @@ export default function RegisterForm() {
     try {
       await registerUser(data);
       addToast(
-        "¡Registro exitoso! Conexión con microservicios establecida correctamente.",
+        "¡Registro exitoso! Bienvenido a BioTech Farm.",
         "success"
       );
-      navigate("/farm-selector");
+      
+      // Redirect after successful registration
+      window.location.href = "/farm-selector";
     } catch (err) {
       console.error("Register error:", err);
-      // The hook sets the error state, but we can also toast immediately
-      const msg =
-        err.response?.data?.message ||
-        "Error: No se está conectando con el microservicio de backend";
-      addToast(msg, "error");
+      
+      // Specific error handling
+      const errorData = err.response?.data;
+      const statusCode = err.response?.status;
+      let errorMessage = "Error al registrar usuario";
+      
+      if (statusCode === 409 || statusCode === 400) {
+        // Email already exists (409 Conflict or 400 Bad Request)
+        if (errorData?.message?.toLowerCase().includes("email") || 
+            errorData?.toLowerCase().includes("email") ||
+            errorData?.message?.toLowerCase().includes("already") ||
+            errorData?.message?.toLowerCase().includes("existe")) {
+          errorMessage = "⚠️ Este correo electrónico ya está registrado. Por favor, usa otro correo o inicia sesión.";
+        } else {
+          errorMessage = errorData?.message || errorData || "Datos inválidos. Verifica la información ingresada.";
+        }
+      } else if (statusCode === 500) {
+        errorMessage = "❌ Error del servidor. Por favor, intenta nuevamente más tarde.";
+      } else if (statusCode === 422) {
+        errorMessage = "⚠️ Los datos ingresados no son válidos. Verifica el formato del correo y la contraseña.";
+      } else if (!err.response) {
+        errorMessage = "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+      } else {
+        errorMessage = errorData?.message || errorData || "Error desconocido al registrar usuario";
+      }
+      
+      addToast(errorMessage, "error");
     }
   };
 

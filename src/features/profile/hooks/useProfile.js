@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useAuthStore } from '../../../shared/store/authStore'
-import apiClient from '../../../shared/utils/apiClient'
+import { useAuthStore } from '@shared/store/authStore'
+import apiClient from '@shared/utils/apiClient'
 
 export const useProfile = () => {
   const { user, token, logout } = useAuthStore()
@@ -33,6 +33,8 @@ export const useProfile = () => {
 
   const handleLogout = () => {
     logout()
+    // Notificar cambio de autenticación para sincronizar
+    window.dispatchEvent(new Event("auth-change"))
     window.location.href = '/'
   }
 

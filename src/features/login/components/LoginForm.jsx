@@ -5,8 +5,8 @@ import { Leaf, Mail, Lock, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogin } from "../hooks/useLogin";
 import { loginSchema } from "../validations/loginSchema";
-import { useToastStore } from "../../../shared/store/toastStore";
-import { farmService } from "../../farm/services/farmService";
+import { useToastStore } from "@shared/store/toastStore";
+import { farmService } from "@features/farm/services/farmService";
 
 export default function LoginForm() {
   const navigate = useNavigate();
@@ -23,27 +23,50 @@ export default function LoginForm() {
   const onSubmit = async (data) => {
     try {
       const loginData = await login(data);
-      addToast("Sesión iniciada correctamente", "success");
+      addToast("✅ Sesión iniciada correctamente. Bienvenido!", "success");
       
-      // Verificar si el usuario tiene granjas
+      // Check if user has farms
       try {
         const farms = await farmService.getUserFarms(loginData.token);
         if (farms && farms.length > 0) {
-          // Si tiene granjas, ir al selector
+          // If user has farms, go to selector
+          addToast(`📊 Se encontraron ${farms.length} granja(s) disponible(s)`, "success");
           window.location.href = "/farm-selector";
         } else {
-          // Si no tiene granjas, ir directo al dashboard
+          // If you do not have farms, go directly to the dashboard
+          addToast("ℹ️ No tienes granjas registradas. Puedes crear una en el dashboard.", "info");
           window.location.href = "/dashboard";
         }
       } catch (farmError) {
-        // Si falla la carga de granjas, ir a farm-selector por defecto
+        // If loading farms fails, go to farm-selector by default
         console.error("Error al verificar granjas:", farmError);
+        addToast("⚠️ No se pudieron cargar las granjas. Redirigiendo...", "warning");
         window.location.href = "/farm-selector";
       }
     } catch (err) {
       console.error("Login error:", err);
-      const msg = err.response?.data?.message || "Credenciales inválidas";
-      addToast(msg, "error");
+      
+      // Specific handling of login errors
+      const errorData = err.response?.data;
+      const statusCode = err.response?.status;
+      let errorMessage = "Error al iniciar sesión";
+      
+      if (statusCode === 401) {
+       // Invalid credentials
+        errorMessage = "🔒 Credenciales incorrectas. Verifica tu correo y contraseña.";
+      } else if (statusCode === 404) {
+        errorMessage = "❌ Usuario no encontrado. ¿Ya te has registrado?";
+      } else if (statusCode === 403) {
+        errorMessage = "⛔ Cuenta inactiva o bloqueada. Contacta al administrador.";
+      } else if (statusCode === 500) {
+        errorMessage = "❌ Error del servidor. Por favor, intenta nuevamente más tarde.";
+      } else if (!err.response) {
+        errorMessage = "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+      } else {
+        errorMessage = errorData?.message || errorData || "Credenciales inválidas";
+      }
+      
+      addToast(errorMessage, "error");
     }
   };
 
