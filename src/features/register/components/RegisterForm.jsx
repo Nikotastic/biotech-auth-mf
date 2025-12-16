@@ -56,7 +56,7 @@ export default function RegisterForm() {
           errorData?.message?.toLowerCase().includes("existe")
         ) {
           errorMessage =
-            "⚠️ Este correo electrónico ya está registrado. Por favor, usa otro correo o inicia sesión.";
+            "Este correo electrónico ya está registrado. Por favor, usa otro correo o inicia sesión.";
         } else {
           errorMessage =
             errorData?.message ||
@@ -64,15 +64,29 @@ export default function RegisterForm() {
             "Datos inválidos. Verifica la información ingresada.";
         }
       } else if (statusCode === 500) {
-        // Handle 500 as potential duplicate or server issue
-        errorMessage =
-          "⚠️ El correo podría estar en uso o hubo un error en el servidor. Intenta iniciar sesión.";
+        // Detect database duplicate errors that might leak into 500s
+        const msg = errorData?.message?.toLowerCase() || "";
+        const body = JSON.stringify(errorData).toLowerCase();
+
+        if (
+          msg.includes("duplicate") ||
+          msg.includes("unique") ||
+          body.includes("duplicate") ||
+          body.includes("unique")
+        ) {
+          errorMessage =
+            "Este correo ya está registrado. Por favor, inicia sesión.";
+        } else {
+          // Fallback for generic 500s which are often hidden duplicate errors
+          errorMessage =
+            "No se pudo completar el registro. Es posible que el correo ya esté en uso o hubo un error en el servidor.";
+        }
       } else if (statusCode === 422) {
         errorMessage =
-          "⚠️ Los datos ingresados no son válidos. Verifica el formato del correo y la contraseña.";
+          "Los datos ingresados no son válidos. Verifica el formato del correo y la contraseña.";
       } else if (!err.response) {
         errorMessage =
-          "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+          "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
       } else {
         errorMessage =
           errorData?.message ||

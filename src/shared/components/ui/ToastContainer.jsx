@@ -3,7 +3,7 @@ import { CheckCircle, XCircle, Info, AlertTriangle, X } from "lucide-react";
 import { useToastStore } from "../../store/toastStore";
 
 const toastVariants = {
-  initial: { opacity: 0, y: 50, scale: 0.9 },
+  initial: { opacity: 0, y: -50, scale: 0.9 },
   animate: { opacity: 1, y: 0, scale: 1 },
   exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } },
 };
@@ -26,7 +26,7 @@ export function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
