@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useLogin } from "../hooks/useLogin";
 import { loginSchema } from "../validations/loginSchema";
 import { useToastStore } from "../../../shared/store/toastStore";
+import { farmService } from "../../farm/services/farmService";
 
 export default function LoginForm() {
   const navigate = useNavigate();
@@ -21,9 +22,24 @@ export default function LoginForm() {
 
   const onSubmit = async (data) => {
     try {
-      await login(data);
+      const loginData = await login(data);
       addToast("Sesión iniciada correctamente", "success");
-      navigate("/farm-selector");
+      
+      // Verificar si el usuario tiene granjas
+      try {
+        const farms = await farmService.getUserFarms(loginData.token);
+        if (farms && farms.length > 0) {
+          // Si tiene granjas, ir al selector
+          navigate("/farm-selector");
+        } else {
+          // Si no tiene granjas, ir directo al dashboard
+          navigate("/dashboard");
+        }
+      } catch (farmError) {
+        // Si falla la carga de granjas, ir a farm-selector por defecto
+        console.error("Error al verificar granjas:", farmError);
+        navigate("/farm-selector");
+      }
     } catch (err) {
       console.error("Login error:", err);
       const msg = err.response?.data?.message || "Credenciales inválidas";
