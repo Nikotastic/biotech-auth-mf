@@ -1,14 +1,18 @@
-import axios from 'axios'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+import apiClient from "@shared/utils/apiClient";
 
 export const farmService = {
   async getUserFarms(token) {
-    const response = await axios.get(`${API_URL}/farms/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    return response.data
-  }
-}
+    // If token is explicitly passed, verify headers, otherwise apiClient handles it
+    const config = token
+      ? {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      : {};
+
+    // Use apiClient instead of direct axios to ensure production URL
+    const response = await apiClient.get("/farms/user", config);
+    return response.data;
+  },
+};
