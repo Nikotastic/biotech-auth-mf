@@ -18,6 +18,7 @@ export default function FarmSelector() {
   const navigate = useNavigate();
   const {
     token,
+    user,
     setSelectedFarm,
     selectedFarm: storedSelectedFarm,
   } = useAuthStore();
@@ -37,7 +38,7 @@ export default function FarmSelector() {
           setLoading(false);
           return;
         }
-        const data = await farmService.getUserFarms(token);
+        const data = await farmService.getUserFarms(token, user?.id);
         // Ensure data is an array
         let farmList = Array.isArray(data) ? data : [];
 
