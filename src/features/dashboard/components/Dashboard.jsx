@@ -13,7 +13,7 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     logout()
-    navigate('/')
+    window.location.href = '/'
   }
 
   const modules = [

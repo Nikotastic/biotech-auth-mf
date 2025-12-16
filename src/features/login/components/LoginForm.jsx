@@ -30,15 +30,15 @@ export default function LoginForm() {
         const farms = await farmService.getUserFarms(loginData.token);
         if (farms && farms.length > 0) {
           // Si tiene granjas, ir al selector
-          navigate("/farm-selector");
+          window.location.href = "/farm-selector";
         } else {
           // Si no tiene granjas, ir directo al dashboard
-          navigate("/dashboard");
+          window.location.href = "/dashboard";
         }
       } catch (farmError) {
         // Si falla la carga de granjas, ir a farm-selector por defecto
         console.error("Error al verificar granjas:", farmError);
-        navigate("/farm-selector");
+        window.location.href = "/farm-selector";
       }
     } catch (err) {
       console.error("Login error:", err);
