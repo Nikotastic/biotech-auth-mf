@@ -35,41 +35,51 @@ export default function RegisterForm() {
   const onSubmit = async (data) => {
     try {
       await registerUser(data);
-      addToast(
-        "¡Registro exitoso! Bienvenido a BioTech Farm.",
-        "success"
-      );
-      
+      addToast("¡Registro exitoso! Bienvenido a BioTech Farm.", "success");
+
       // Redirect after successful registration
       window.location.href = "/farm-selector";
     } catch (err) {
       console.error("Register error:", err);
-      
+
       // Specific error handling
       const errorData = err.response?.data;
       const statusCode = err.response?.status;
       let errorMessage = "Error al registrar usuario";
-      
+
       if (statusCode === 409 || statusCode === 400) {
         // Email already exists (409 Conflict or 400 Bad Request)
-        if (errorData?.message?.toLowerCase().includes("email") || 
-            errorData?.toLowerCase().includes("email") ||
-            errorData?.message?.toLowerCase().includes("already") ||
-            errorData?.message?.toLowerCase().includes("existe")) {
-          errorMessage = "⚠️ Este correo electrónico ya está registrado. Por favor, usa otro correo o inicia sesión.";
+        if (
+          errorData?.message?.toLowerCase().includes("email") ||
+          errorData?.toLowerCase().includes("email") ||
+          errorData?.message?.toLowerCase().includes("already") ||
+          errorData?.message?.toLowerCase().includes("existe")
+        ) {
+          errorMessage =
+            "⚠️ Este correo electrónico ya está registrado. Por favor, usa otro correo o inicia sesión.";
         } else {
-          errorMessage = errorData?.message || errorData || "Datos inválidos. Verifica la información ingresada.";
+          errorMessage =
+            errorData?.message ||
+            errorData ||
+            "Datos inválidos. Verifica la información ingresada.";
         }
       } else if (statusCode === 500) {
-        errorMessage = "❌ Error del servidor. Por favor, intenta nuevamente más tarde.";
+        // Handle 500 as potential duplicate or server issue
+        errorMessage =
+          "⚠️ El correo podría estar en uso o hubo un error en el servidor. Intenta iniciar sesión.";
       } else if (statusCode === 422) {
-        errorMessage = "⚠️ Los datos ingresados no son válidos. Verifica el formato del correo y la contraseña.";
+        errorMessage =
+          "⚠️ Los datos ingresados no son válidos. Verifica el formato del correo y la contraseña.";
       } else if (!err.response) {
-        errorMessage = "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+        errorMessage =
+          "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
       } else {
-        errorMessage = errorData?.message || errorData || "Error desconocido al registrar usuario";
+        errorMessage =
+          errorData?.message ||
+          errorData ||
+          "Error desconocido al registrar usuario";
       }
-      
+
       addToast(errorMessage, "error");
     }
   };

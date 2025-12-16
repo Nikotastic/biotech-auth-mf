@@ -24,48 +24,62 @@ export default function LoginForm() {
     try {
       const loginData = await login(data);
       addToast("✅ Sesión iniciada correctamente. Bienvenido!", "success");
-      
+
       // Check if user has farms
       try {
         const farms = await farmService.getUserFarms(loginData.token);
         if (farms && farms.length > 0) {
           // If user has farms, go to selector
-          addToast(`📊 Se encontraron ${farms.length} granja(s) disponible(s)`, "success");
+          addToast(
+            `📊 Se encontraron ${farms.length} granja(s) disponible(s)`,
+            "success"
+          );
           window.location.href = "/farm-selector";
         } else {
-          // If you do not have farms, go directly to the dashboard
-          addToast("ℹ️ No tienes granjas registradas. Puedes crear una en el dashboard.", "info");
-          window.location.href = "/dashboard";
+          // If you do not have farms, go to selector to create one
+          addToast(
+            "ℹ️ No tienes granjas registradas. Vamos a crear una.",
+            "info"
+          );
+          window.location.href = "/farm-selector";
         }
       } catch (farmError) {
         // If loading farms fails, go to farm-selector by default
         console.error("Error al verificar granjas:", farmError);
-        addToast("⚠️ No se pudieron cargar las granjas. Redirigiendo...", "warning");
+        addToast(
+          "⚠️ No se pudieron cargar las granjas. Redirigiendo...",
+          "warning"
+        );
         window.location.href = "/farm-selector";
       }
     } catch (err) {
       console.error("Login error:", err);
-      
+
       // Specific handling of login errors
       const errorData = err.response?.data;
       const statusCode = err.response?.status;
       let errorMessage = "Error al iniciar sesión";
-      
+
       if (statusCode === 401) {
-       // Invalid credentials
-        errorMessage = "🔒 Credenciales incorrectas. Verifica tu correo y contraseña.";
+        // Invalid credentials
+        errorMessage =
+          "🔒 Credenciales incorrectas. Verifica tu correo y contraseña.";
       } else if (statusCode === 404) {
         errorMessage = "❌ Usuario no encontrado. ¿Ya te has registrado?";
       } else if (statusCode === 403) {
-        errorMessage = "⛔ Cuenta inactiva o bloqueada. Contacta al administrador.";
+        errorMessage =
+          "⛔ Cuenta inactiva o bloqueada. Contacta al administrador.";
       } else if (statusCode === 500) {
-        errorMessage = "❌ Error del servidor. Por favor, intenta nuevamente más tarde.";
+        errorMessage =
+          "❌ Error del servidor. Por favor, intenta nuevamente más tarde.";
       } else if (!err.response) {
-        errorMessage = "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+        errorMessage =
+          "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
       } else {
-        errorMessage = errorData?.message || errorData || "Credenciales inválidas";
+        errorMessage =
+          errorData?.message || errorData || "Credenciales inválidas";
       }
-      
+
       addToast(errorMessage, "error");
     }
   };
