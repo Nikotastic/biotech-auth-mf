@@ -79,7 +79,7 @@ export default function FarmSelector() {
         // Force a hard reload or ensure router knows where dashboard is
         // Usually navigate('/dashboard') is enough if it's SPA
         // But if it's shell, we might need window.location
-        window.location.href = "/dashboard";
+        navigate("/dashboard");
       }, 300);
     } else {
       addToast("❌ Error al seleccionar la granja", "error");

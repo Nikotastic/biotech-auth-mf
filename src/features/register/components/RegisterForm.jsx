@@ -38,7 +38,7 @@ export default function RegisterForm() {
       addToast("¡Registro exitoso! Bienvenido a BioTech Farm.", "success");
 
       // Redirect after successful registration
-      window.location.href = "/farm-selector";
+      navigate("/farm-selector");
     } catch (err) {
       console.error("Register error:", err);
 

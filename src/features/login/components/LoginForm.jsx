@@ -34,14 +34,14 @@ export default function LoginForm() {
             `📊 Se encontraron ${farms.length} granja(s) disponible(s)`,
             "success"
           );
-          window.location.href = "/farm-selector";
+          navigate("/farm-selector");
         } else {
           // If you do not have farms, go to selector to create one
           addToast(
             "ℹ️ No tienes granjas registradas. Vamos a crear una.",
             "info"
           );
-          window.location.href = "/farm-selector";
+          navigate("/farm-selector");
         }
       } catch (farmError) {
         // If loading farms fails, go to farm-selector by default
@@ -50,7 +50,7 @@ export default function LoginForm() {
           "⚠️ No se pudieron cargar las granjas. Redirigiendo...",
           "warning"
         );
-        window.location.href = "/farm-selector";
+        navigate("/farm-selector");
       }
     } catch (err) {
       console.error("Login error:", err);
