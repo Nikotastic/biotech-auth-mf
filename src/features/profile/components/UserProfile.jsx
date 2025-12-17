@@ -14,7 +14,7 @@ import {
 import { motion } from "framer-motion";
 import { useProfile } from "../hooks/useProfile";
 import { useAuthStore } from "@shared/store/authStore";
-import { useToastStore } from "@shared/store/toastStore";
+import alertService from "@shared/utils/alertService";
 import { AnimatePresence } from "framer-motion";
 import EditProfileModal from "./EditProfileModal";
 
@@ -22,18 +22,21 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const { profile, logout, isAuthenticated, updateProfile } = useProfile();
   const { selectedFarm } = useAuthStore();
-  const addToast = useToastStore((state) => state.addToast);
+
   const [showEditModal, setShowEditModal] = useState(false);
 
   const handleUpdateProfile = async (data) => {
     try {
       await updateProfile(data);
-      addToast("¡Tu perfil se ha actualizado con éxito! 🎉", "success");
+      alertService.success(
+        "Tu perfil se ha actualizado correctamente",
+        "¡Éxito!"
+      );
       setShowEditModal(false);
     } catch (error) {
-      addToast(
-        "Ups, ocurrió un problema al actualizar. Inténtalo de nuevo. 😅",
-        "error"
+      alertService.error(
+        "Ocurrió un problema al actualizar. Inténtalo de nuevo.",
+        "Error"
       );
     }
   };
@@ -45,7 +48,7 @@ export default function UserProfile() {
   }, [isAuthenticated, navigate]);
 
   const handleLogout = () => {
-    addToast("¡Nos vemos pronto! Cerrando sesión... 👋", "info");
+    alertService.info("Cerrando sesión...", "¡Nos vemos pronto!");
     setTimeout(() => {
       logout();
     }, 500);

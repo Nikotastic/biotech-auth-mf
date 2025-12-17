@@ -1,13 +1,20 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
       selectedFarm: null,
+      _hasHydrated: false,
+
+      setHasHydrated: (state) => {
+        set({
+          _hasHydrated: state,
+        });
+      },
 
       setAuth: (user, token) =>
         set({
@@ -43,6 +50,10 @@ export const useAuthStore = create(
     }),
     {
       name: "auth-storage",
+      storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
