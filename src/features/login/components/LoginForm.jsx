@@ -5,13 +5,13 @@ import { Leaf, Mail, Lock, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogin } from "../hooks/useLogin";
 import { loginSchema } from "../validations/loginSchema";
-import { useToastStore } from "@shared/store/toastStore";
+import alertService from "@shared/utils/alertService";
 import { farmService } from "@features/farm/services/farmService";
 
 export default function LoginForm() {
   const navigate = useNavigate();
   const { login, loading, error } = useLogin();
-  const addToast = useToastStore((state) => state.addToast);
+
   const {
     register,
     handleSubmit,
@@ -23,7 +23,10 @@ export default function LoginForm() {
   const onSubmit = async (data) => {
     try {
       const loginData = await login(data);
-      addToast("✅ Sesión iniciada correctamente. Bienvenido!", "success");
+      alertService.success(
+        "Bienvenido a BioTech Farm",
+        "Sesión iniciada correctamente"
+      );
 
       // Check if user has farms
       try {
@@ -38,15 +41,15 @@ export default function LoginForm() {
 
         if (farms && farms.length > 0) {
           // If user has farms, go to selector
-          addToast(
-            `📊 Se encontraron ${farms.length} granja(s) disponible(s)`,
-            "success"
+          alertService.info(
+            `Se encontraron ${farms.length} granja(s) disponible(s)`,
+            "Granjas Disponibles"
           );
         } else {
           // If you do not have farms, go to selector to create one
-          addToast(
-            "ℹ️ No tienes granjas registradas. Vamos a crear una.",
-            "info"
+          alertService.info(
+            "No tienes granjas registradas. Vamos a crear una.",
+            "Primera Granja"
           );
         }
 
@@ -58,9 +61,9 @@ export default function LoginForm() {
       } catch (farmError) {
         // If loading farms fails, go to farm-selector by default
         console.error("Error al verificar granjas:", farmError);
-        addToast(
-          "⚠️ No se pudieron cargar las granjas. Redirigiendo...",
-          "warning"
+        alertService.warning(
+          "No se pudieron cargar las granjas. Redirigiendo...",
+          "Advertencia"
         );
         await new Promise((resolve) => setTimeout(resolve, 600));
         window.location.href = "/farm-selector";
@@ -93,7 +96,7 @@ export default function LoginForm() {
           errorData?.message || errorData || "Credenciales inválidas";
       }
 
-      addToast(errorMessage, "error");
+      alertService.error(errorMessage, "Error de Inicio de Sesión");
     }
   };
 
