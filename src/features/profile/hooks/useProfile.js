@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@shared/store/authStore";
-import apiClient from "@shared/utils/apiClient";
+import apiService from "@shared-services/ApiService";
 
 export const useProfile = () => {
   const { user, token, logout } = useAuthStore();
@@ -11,7 +11,7 @@ export const useProfile = () => {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get("/auth/profile");
+      const response = await apiService.get("/auth/profile");
       setProfileData(response.data);
       return response.data;
     } catch (err) {
@@ -35,7 +35,7 @@ export const useProfile = () => {
 
     try {
       // Corrected endpoint path to match ProfileController: api/auth/profile
-      const response = await apiClient.put("/auth/profile", data);
+      const response = await apiService.put("/auth/profile", data);
 
       const updatedData = {
         ...profileData,
