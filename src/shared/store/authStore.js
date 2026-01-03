@@ -16,19 +16,25 @@ export const useAuthStore = create(
         });
       },
 
-      setAuth: (user, token) =>
-        set({
-          user,
-          token,
-          isAuthenticated: true,
-        }),
+      setAuth: (user, token) => {
+        set({ user, token, isAuthenticated: true });
+        // Emitir evento para que el Shell y ApiService se enteren
+        window.dispatchEvent(
+          new CustomEvent("auth:login", { detail: { user, token } })
+        );
+      },
 
-      setSelectedFarm: (farm) =>
-        set({
-          selectedFarm: farm,
-        }),
+      setSelectedFarm: (farm) => {
+        set({ selectedFarm: farm });
+        window.dispatchEvent(
+          new CustomEvent("farm:selected", { detail: { farm } })
+        );
+      },
 
       logout: () => {
+        // Notificar logout al sistema
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+
         // Limpiar el estado
         set({
           user: null,
@@ -36,15 +42,16 @@ export const useAuthStore = create(
           isAuthenticated: false,
           selectedFarm: null,
         });
-        
+
         // Eliminar explícitamente del localStorage
         localStorage.removeItem("auth-storage");
-        
+
         // Limpiar cualquier cookie relacionada
         document.cookie.split(";").forEach((cookie) => {
           const eqPos = cookie.indexOf("=");
           const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+          document.cookie =
+            name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
         });
       },
     }),

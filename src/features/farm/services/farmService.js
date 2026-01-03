@@ -1,4 +1,4 @@
-import apiClient from "@shared/utils/apiClient";
+import apiService from "@shared-services/ApiService";
 
 export const farmService = {
   async getUserFarms(token, userId) {
@@ -30,14 +30,14 @@ export const farmService = {
     }
 
     // Backend route: /api/v1/Farms/tenant/{userId}
-    const response = await apiClient.get(`/v1/Farms/tenant/${userId}`, config);
+    const response = await apiService.get(`/v1/Farms/tenant/${userId}`, config);
     // Backend returns ApiResponse<FarmListResponse> = { success, data: { farms: [...] }, message }
     return response.data?.data || response.data;
   },
 
   async createFarm(farmData) {
     // POST /api/v1/Farms
-    const response = await apiClient.post("/v1/Farms", farmData);
+    const response = await apiService.post("/v1/Farms", farmData);
     // Backend returns ApiResponse<FarmResponse> = { success, data: {...}, message }
     return response.data?.data || response.data;
   },
@@ -47,7 +47,7 @@ export const farmService = {
     if (!farmId) {
       throw new Error("Farm ID is required");
     }
-    const response = await apiClient.get(`/v1/Farms/${farmId}`);
+    const response = await apiService.get(`/v1/Farms/${farmId}`);
     // Backend returns ApiResponse<FarmResponse> = { success, data: {...}, message }
     return response.data?.data || response.data;
   },

@@ -1,10 +1,10 @@
-import apiClient from "../../../shared/utils/apiClient";
+import apiService from "@shared-services/ApiService";
 
 export const profileService = {
   // GET /api/Auth/profile - Get the authenticated user's profile
   getProfile: async () => {
     try {
-      const response = await apiClient.get("/Auth/profile");
+      const response = await apiService.get("/Auth/profile");
       return response.data;
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -15,7 +15,7 @@ export const profileService = {
   // PUT /api/Auth/profile - Update the authenticated user's profile
   updateProfile: async (profileData) => {
     try {
-      const response = await apiClient.put("/Auth/profile", profileData);
+      const response = await apiService.put("/Auth/profile", profileData);
       return response.data;
     } catch (error) {
       console.error("Error updating profile:", error);
