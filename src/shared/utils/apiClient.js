@@ -1,8 +1,12 @@
 import axios from "axios";
 
+// Get API URL from environment or use mock mode
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
+const API_URL = import.meta.env.VITE_API_GATEWAY_URL || "https://api-gateway-bio-tech.up.railway.app/api";
+
 // Cliente de API configurado para el Gateway
 const apiClient = axios.create({
-  baseURL: "https://api-gateway-bio-tech.up.railway.app/api",
+  baseURL: USE_MOCK_API ? "http://localhost:9999/mock-api" : API_URL, // Use fake URL in mock mode to prevent real calls
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

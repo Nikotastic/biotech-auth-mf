@@ -1,7 +1,26 @@
 import apiClient from "@shared/utils/apiClient";
 
+// Mock data
+const MOCK_FARMS = [
+  {
+    id: "farm-1",
+    name: "Granja Demo",
+    location: "Valle del Cauca, Colombia",
+    size: 50,
+    animalCount: 120,
+    tenantId: "user-1"
+  }
+];
+
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
+
 export const farmService = {
   async getUserFarms(token, userId) {
+    if (USE_MOCK_API) {
+      console.log('🧪 Using MOCK API for farms');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return MOCK_FARMS.filter(f => f.tenantId === userId);
+    }
     // If token is explicitly passed, verify headers, otherwise apiClient handles it
     const config = token
       ? {
@@ -36,6 +55,17 @@ export const farmService = {
   },
 
   async createFarm(farmData) {
+    if (USE_MOCK_API) {
+      console.log('🧪 Using MOCK API - creating farm');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const newFarm = {
+        id: `farm-${MOCK_FARMS.length + 1}`,
+        ...farmData,
+        animalCount: 0
+      };
+      MOCK_FARMS.push(newFarm);
+      return newFarm;
+    }
     // POST /api/Farm
     const response = await apiClient.post("/Farm", farmData);
     return response.data;

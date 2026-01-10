@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@shared/store/authStore";
 import apiClient from "@shared/utils/apiClient";
+import { profileServiceMock } from "../services/profileServiceMock";
+
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
 
 export const useProfile = () => {
   const { user, token, logout } = useAuthStore();
@@ -11,6 +14,12 @@ export const useProfile = () => {
   const fetchProfile = async () => {
     setLoading(true);
     try {
+      if (USE_MOCK_API) {
+        const data = await profileServiceMock.getProfile();
+        setProfileData(data);
+        return data;
+      }
+      
       const response = await apiClient.get("/auth/profile");
       setProfileData(response.data);
       return response.data;
@@ -34,6 +43,12 @@ export const useProfile = () => {
     setError(null);
 
     try {
+      if (USE_MOCK_API) {
+        await profileServiceMock.updateProfile(data);
+        setProfileData((prev) => ({ ...prev, ...data }));
+        return { success: true };
+      }
+      
       // Corrected endpoint path to match ProfileController: api/auth/profile
       const response = await apiClient.put("/auth/profile", data);
       setProfileData((prev) => ({ ...prev, ...data })); // Optimistic or use response if it returns updated data
