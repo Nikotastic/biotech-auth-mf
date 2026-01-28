@@ -1,34 +1,48 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { User, Mail, Shield, Calendar, LogOut, Settings, Building2, Edit2, Lock } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useProfile } from '../hooks/useProfile'
-import { useAuthStore } from '@shared/store/authStore'
-import { useToastStore } from '@shared/store/toastStore'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  User,
+  Mail,
+  Shield,
+  Calendar,
+  LogOut,
+  Settings,
+  Building2,
+  Edit2,
+  Lock,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { useProfile } from "../hooks/useProfile";
+import { useAuth } from "@shared/hooks/useAuth";
+import { useToastStore } from "@shared/store/toastStore";
 
 export default function UserProfile() {
-  const navigate = useNavigate()
-  const { profile, logout, isAuthenticated } = useProfile()
-  const { selectedFarm } = useAuthStore()
-  const addToast = useToastStore((state) => state.addToast)
-  const [showEditModal, setShowEditModal] = useState(false)
+  const navigate = useNavigate();
+  const { profile } = useProfile();
+  const { isAuthenticated, selectedFarm, logout } = useAuth();
+  const addToast = useToastStore((state) => state.addToast);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login')
+      navigate("/login");
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate]);
 
   const handleLogout = () => {
-    addToast("👋 Cerrando sesión...", "info")
+    addToast("👋 Cerrando sesión...", "info");
     setTimeout(() => {
-      logout()
-    }, 500)
-  }
+      logout();
+      // Emitir evento para sincronización
+      window.dispatchEvent(new Event("auth-change"));
+      // Redirigir al login
+      navigate("/login");
+    }, 500);
+  };
 
   const handleBackToDashboard = () => {
-    navigate('/dashboard')
-  }
+    navigate("/dashboard");
+  };
 
   if (!profile) {
     return (
@@ -38,7 +52,7 @@ export default function UserProfile() {
           <p className="mt-4 text-gray-600">Cargando perfil...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -84,13 +98,13 @@ export default function UserProfile() {
                   <User className="w-12 h-12 text-white" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-800 mb-1">
-                  {profile.name || 'Usuario'}
+                  {profile.name || "Usuario"}
                 </h2>
                 <p className="text-sm text-gray-500 mb-4">{profile.email}</p>
-                
+
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                   <Shield className="w-4 h-4" />
-                  {profile.role || 'Usuario'}
+                  {profile.role || "Usuario"}
                 </div>
               </div>
 
@@ -99,7 +113,9 @@ export default function UserProfile() {
                   <p className="text-sm text-gray-500 mb-2">Granja Actual</p>
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-green-600" />
-                    <p className="text-sm font-medium text-gray-800">{selectedFarm.name}</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {selectedFarm.name}
+                    </p>
                   </div>
                 </div>
               )}
@@ -116,7 +132,9 @@ export default function UserProfile() {
             {/* Personal Info */}
             <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-green-100">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-800">Información Personal</h3>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Información Personal
+                </h3>
                 <button
                   onClick={() => setShowEditModal(true)}
                   className="p-2 hover:bg-green-50 rounded-lg transition-colors"
@@ -131,7 +149,7 @@ export default function UserProfile() {
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Nombre completo</p>
                     <p className="text-base font-medium text-gray-800">
-                      {profile.name || 'No especificado'}
+                      {profile.name || "No especificado"}
                     </p>
                   </div>
                 </div>
@@ -140,7 +158,9 @@ export default function UserProfile() {
                   <Mail className="w-5 h-5 text-green-600 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Correo electrónico</p>
-                    <p className="text-base font-medium text-gray-800">{profile.email}</p>
+                    <p className="text-base font-medium text-gray-800">
+                      {profile.email}
+                    </p>
                   </div>
                 </div>
 
@@ -149,7 +169,7 @@ export default function UserProfile() {
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Rol en el sistema</p>
                     <p className="text-base font-medium text-gray-800">
-                      {profile.role || 'Usuario'}
+                      {profile.role || "Usuario"}
                     </p>
                   </div>
                 </div>
@@ -159,11 +179,16 @@ export default function UserProfile() {
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Miembro desde</p>
                     <p className="text-base font-medium text-gray-800">
-                      {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      }) : 'No disponible'}
+                      {profile.createdAt
+                        ? new Date(profile.createdAt).toLocaleDateString(
+                            "es-ES",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            },
+                          )
+                        : "No disponible"}
                     </p>
                   </div>
                 </div>
@@ -179,14 +204,18 @@ export default function UserProfile() {
 
               <div className="space-y-3">
                 <button
-                  onClick={() => navigate('/reset-password')}
+                  onClick={() => navigate("/reset-password")}
                   className="w-full flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
                 >
                   <div className="flex items-center gap-3">
                     <Lock className="w-5 h-5 text-green-600" />
                     <div className="text-left">
-                      <p className="font-medium text-gray-800">Cambiar Contraseña</p>
-                      <p className="text-sm text-gray-500">Actualiza tu contraseña</p>
+                      <p className="font-medium text-gray-800">
+                        Cambiar Contraseña
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Actualiza tu contraseña
+                      </p>
                     </div>
                   </div>
                   <Edit2 className="w-5 h-5 text-green-600 group-hover:translate-x-1 transition-transform" />
@@ -201,13 +230,14 @@ export default function UserProfile() {
                 Seguridad de tu cuenta
               </h3>
               <p className="text-green-800 text-sm">
-                Tu información está protegida. Recuerda no compartir tu contraseña con nadie y 
-                cerrar sesión cuando uses dispositivos compartidos.
+                Tu información está protegida. Recuerda no compartir tu
+                contraseña con nadie y cerrar sesión cuando uses dispositivos
+                compartidos.
               </p>
             </div>
           </motion.div>
         </div>
       </div>
     </div>
-  )
+  );
 }
