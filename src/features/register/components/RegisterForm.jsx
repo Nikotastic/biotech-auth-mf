@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate, Link } from "react-router-dom";
@@ -9,6 +10,8 @@ import {
   Sparkles,
   Check,
   X as XIcon,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRegister } from "../hooks/useRegister";
@@ -16,6 +19,8 @@ import { registerSchema } from "../validations/registerSchema";
 import { useToastStore } from "@shared/store/toastStore";
 
 export default function RegisterForm() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { register: registerUser, loading, error } = useRegister();
   const addToast = useToastStore((state) => state.addToast);
@@ -100,6 +105,11 @@ export default function RegisterForm() {
 
   const requirements = [
     { label: "Mínimo 6 caracteres", met: password.length >= 6 },
+    { label: "Al menos un número", met: /[0-9]/.test(password) },
+    {
+      label: "Al menos un carácter especial",
+      met: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    },
     {
       label: "Las contraseñas coinciden",
       met: password && password === confirmPassword && password.length >= 6,
@@ -264,11 +274,22 @@ export default function RegisterForm() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 hover:text-green-700 transition-colors focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">
@@ -293,11 +314,22 @@ export default function RegisterForm() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   {...register("confirmPassword")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 hover:text-green-700 transition-colors focus:outline-none"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-600">

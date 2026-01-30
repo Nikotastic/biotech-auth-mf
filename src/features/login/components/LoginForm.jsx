@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Link, useNavigate } from "react-router-dom";
-import { Leaf, Mail, Lock, Sparkles } from "lucide-react";
+import { Leaf, Mail, Lock, Sparkles, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogin } from "../hooks/useLogin";
 import { loginSchema } from "../validations/loginSchema";
@@ -9,6 +10,7 @@ import { useToastStore } from "@shared/store/toastStore";
 import { farmService } from "@features/farm/services/farmService";
 
 export default function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login, loading, error } = useLogin();
   const addToast = useToastStore((state) => state.addToast);
@@ -29,19 +31,19 @@ export default function LoginForm() {
       try {
         const farms = await farmService.getUserFarms(
           loginData.token,
-          loginData.user.id
+          loginData.user.id,
         );
         if (farms && farms.length > 0) {
           // If user has farms, go to selector
           addToast(
             `📊 Se encontraron ${farms.length} granja(s) disponible(s)`,
-            "success"
+            "success",
           );
         } else {
           // If you do not have farms, go to selector to create one
           addToast(
             "ℹ️ No tienes granjas registradas. Vamos a crear una.",
-            "info"
+            "info",
           );
         }
 
@@ -55,7 +57,7 @@ export default function LoginForm() {
         console.error("Error al verificar granjas:", farmError);
         addToast(
           "⚠️ No se pudieron cargar las granjas. Redirigiendo...",
-          "warning"
+          "warning",
         );
         await new Promise((resolve) => setTimeout(resolve, 600));
         window.location.href = "/farm-selector";
@@ -221,11 +223,22 @@ export default function LoginForm() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 hover:text-green-700 transition-colors focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">

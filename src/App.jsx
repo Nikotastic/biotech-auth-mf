@@ -15,7 +15,6 @@ import {
 import { AuthGuard } from "@shared/components/guards";
 import { Unauthorized, NotFound } from "@shared/components/errors";
 import { ROLES, PERMISSIONS } from "@shared/constants/roles";
-import { PrivateRoute, PublicRoute } from "@shared/components/routes";
 
 function App() {
   return (
@@ -65,7 +64,6 @@ function App() {
                 <AuthGuard>
                   <FarmSelector />
                 </AuthGuard>
-                <FarmSelector />
               </PrivateRoute>
             }
           />
@@ -76,7 +74,6 @@ function App() {
                 <AuthGuard>
                   <Dashboard />
                 </AuthGuard>
-                <Dashboard />
               </PrivateRoute>
             }
           />
@@ -87,7 +84,6 @@ function App() {
                 <AuthGuard>
                   <UserProfile />
                 </AuthGuard>
-                <UserProfile />
               </PrivateRoute>
             }
           />
