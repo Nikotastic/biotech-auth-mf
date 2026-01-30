@@ -1,5 +1,10 @@
 import { useAuthStore } from "@shared/store/authStore";
 import { tokenManager } from "@shared/utils/tokenManager";
+import {
+  hasPermission as checkPermission,
+  hasAllPermissions as checkAllPermissions,
+  hasAnyPermission as checkAnyPermission,
+} from "@shared/constants/roles";
 import { useEffect } from "react";
 
 /**
@@ -64,6 +69,36 @@ export const useAuth = () => {
   };
 
   /**
+   * Verifica si el usuario tiene un permiso específico
+   * @param {string} permission - Permiso a verificar
+   * @returns {boolean} true si el usuario tiene el permiso
+   */
+  const hasPermission = (permission) => {
+    if (!user || !user.role) return false;
+    return checkPermission(user.role, permission);
+  };
+
+  /**
+   * Verifica si el usuario tiene todos los permisos especificados
+   * @param {string[]} permissions - Array de permisos a verificar
+   * @returns {boolean} true si el usuario tiene todos los permisos
+   */
+  const hasAllPermissions = (permissions) => {
+    if (!user || !user.role) return false;
+    return checkAllPermissions(user.role, permissions);
+  };
+
+  /**
+   * Verifica si el usuario tiene al menos uno de los permisos especificados
+   * @param {string[]} permissions - Array de permisos a verificar
+   * @returns {boolean} true si el usuario tiene al menos un permiso
+   */
+  const hasAnyPermission = (permissions) => {
+    if (!user || !user.role) return false;
+    return checkAnyPermission(user.role, permissions);
+  };
+
+  /**
    * Obtiene el tiempo restante hasta la expiración del token
    * @returns {number} Milisegundos hasta la expiración
    */
@@ -99,12 +134,18 @@ export const useAuth = () => {
     // Métodos de usuario
     updateUser,
 
+    // Métodos de validación de roles
     // Métodos de validación
     isTokenValid,
     getUserFromToken,
     getTokenPayload,
     hasRole,
     hasAnyRole,
+
+    // Métodos de validación de permisos
+    hasPermission,
+    hasAllPermissions,
+    hasAnyPermission,
 
     // Métodos de expiración
     getTimeUntilExpiration,

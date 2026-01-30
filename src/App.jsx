@@ -7,6 +7,14 @@ import ResetPasswordForm from "@features/password/components/ResetPasswordForm";
 import FarmSelector from "@features/farm/components/FarmSelector";
 import Dashboard from "@features/dashboard/components/Dashboard";
 import { ToastContainer } from "@shared/components/ui/ToastContainer";
+import {
+  PrivateRoute,
+  PublicRoute,
+  RoleBasedRoute,
+} from "@shared/components/routes";
+import { AuthGuard } from "@shared/components/guards";
+import { Unauthorized, NotFound } from "@shared/components/errors";
+import { ROLES, PERMISSIONS } from "@shared/constants/roles";
 import { PrivateRoute, PublicRoute } from "@shared/components/routes";
 
 function App() {
@@ -54,6 +62,9 @@ function App() {
             path="/farm-selector"
             element={
               <PrivateRoute>
+                <AuthGuard>
+                  <FarmSelector />
+                </AuthGuard>
                 <FarmSelector />
               </PrivateRoute>
             }
@@ -62,6 +73,9 @@ function App() {
             path="/dashboard"
             element={
               <PrivateRoute>
+                <AuthGuard>
+                  <Dashboard />
+                </AuthGuard>
                 <Dashboard />
               </PrivateRoute>
             }
@@ -70,14 +84,47 @@ function App() {
             path="/profile"
             element={
               <PrivateRoute>
+                <AuthGuard>
+                  <UserProfile />
+                </AuthGuard>
                 <UserProfile />
               </PrivateRoute>
             }
           />
 
+          {/* Ejemplo de Ruta Basada en Roles - Solo Admin */}
+          {/* <Route
+            path="/admin"
+            element={
+              <RoleBasedRoute allowedRoles={[ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
+                <AuthGuard>
+                  <AdminPanel />
+                </AuthGuard>
+              </RoleBasedRoute>
+            }
+          /> */}
+
+          {/* Ejemplo de Ruta Basada en Permisos */}
+          {/* <Route
+            path="/reports"
+            element={
+              <RoleBasedRoute
+                anyPermissions={[PERMISSIONS.REPORT_READ, PERMISSIONS.REPORT_CREATE]}
+              >
+                <AuthGuard>
+                  <Reports />
+                </AuthGuard>
+              </RoleBasedRoute>
+            }
+          /> */}
+
+          {/* Rutas de Error */}
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/404" element={<NotFound />} />
+
           {/* Rutas por defecto */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </>
