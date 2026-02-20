@@ -39,11 +39,9 @@ const PageLoader = () => (
 );
 
 function App() {
-  const isStandalone = window.location.port === "5001" || !window.location.port;
-
   return (
     <>
-      {isStandalone && <ToastContainer />}
+      <ToastContainer />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>

@@ -9,6 +9,7 @@ import { loginSchema } from "../validations/loginSchema";
 import { useToastStore } from "@shared/store/toastStore";
 import { farmService } from "@features/farm/services/farmService";
 import { handleAuthError } from "@shared/utils/authErrorHandler";
+import { ToastContainer } from "@shared/components/ui/ToastContainer";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -224,17 +225,6 @@ export default function LoginForm() {
               </div>
             </motion.div>
 
-            {/* Error Message */}
-            {error && (
-              <motion.div
-                className="p-3 bg-red-50 border border-red-200 rounded-lg"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                <p className="text-sm text-red-600">{error}</p>
-              </motion.div>
-            )}
-
             {/* Submit Button */}
             <motion.button
               type="submit"
@@ -281,6 +271,7 @@ export default function LoginForm() {
           </motion.div>
         </motion.div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
