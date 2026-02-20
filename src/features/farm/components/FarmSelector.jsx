@@ -152,7 +152,7 @@ export default function FarmSelector() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
       </div>
     );
@@ -161,7 +161,7 @@ export default function FarmSelector() {
   return (
     <>
       <ToastContainer />
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="min-h-screen bg-background transition-colors duration-300 flex items-center justify-center p-3 sm:p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -308,7 +308,7 @@ export default function FarmSelector() {
             transition={{ delay: 0.8 }}
             className="text-center text-[10px] sm:text-xs text-green-600 mt-6"
           >
-            © 2024 BioTech Farm Management. Todos los derechos reservados.
+            © 2026 BioTech Farm Management. Todos los derechos reservados.
           </motion.p>
 
           {/* Create Farm Modal */}

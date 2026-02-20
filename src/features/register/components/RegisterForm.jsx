@@ -190,7 +190,7 @@ export default function RegisterForm() {
 
         {/* Register Card */}
         <motion.div
-          className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 border border-green-100/50"
+          className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 border border-green-100/50 transition-colors duration-300"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -221,7 +221,7 @@ export default function RegisterForm() {
                   id="name"
                   type="text"
                   {...register("name")}
-                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="Juan Pérez"
                 />
               </div>
@@ -250,7 +250,7 @@ export default function RegisterForm() {
                   id="email"
                   type="email"
                   {...register("email")}
-                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="correo@ejemplo.com"
                 />
               </div>
@@ -279,7 +279,7 @@ export default function RegisterForm() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
+                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="••••••••"
                 />
                 <button
@@ -319,7 +319,7 @@ export default function RegisterForm() {
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   {...register("confirmPassword")}
-                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
+                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="••••••••"
                 />
                 <button
@@ -346,7 +346,7 @@ export default function RegisterForm() {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
-                className="space-y-1.5 sm:space-y-2 bg-gray-50/50 p-3 rounded-xl border border-gray-100"
+                className="space-y-1.5 sm:space-y-2 bg-gray-50/50 p-3 rounded-xl border border-gray-100 transition-colors"
               >
                 {requirements.map((req, index) => (
                   <div

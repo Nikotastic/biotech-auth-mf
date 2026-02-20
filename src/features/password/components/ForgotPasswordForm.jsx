@@ -21,7 +21,7 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background transition-colors duration-300 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -29,7 +29,7 @@ export default function ForgotPasswordForm() {
         className="w-full max-w-md px-2 sm:px-0"
       >
         {/* Card */}
-        <div className="bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-green-100">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-green-100 transition-colors duration-300">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             <motion.div
@@ -89,7 +89,7 @@ export default function ForgotPasswordForm() {
                     type="email"
                     {...register("email")}
                     placeholder="tu@email.com"
-                    className="w-full pl-11 sm:pl-12 pr-4 py-2.5 sm:py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
+                    className="w-full pl-11 sm:pl-12 pr-4 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   />
                 </div>
                 {errors.email && (
@@ -159,7 +159,7 @@ export default function ForgotPasswordForm() {
           transition={{ delay: 0.8 }}
           className="text-center text-[10px] sm:text-xs text-green-600 mt-6"
         >
-          © 2024 BioTech Farm Management. Todos los derechos reservados.
+          © 2026 BioTech Farm Management. Todos los derechos reservados.
         </motion.p>
       </motion.div>
     </div>
