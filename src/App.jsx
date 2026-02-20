@@ -30,6 +30,9 @@ const FarmSelector = lazy(
 const Dashboard = lazy(
   () => import("@features/dashboard/components/Dashboard"),
 );
+const SettingsPage = lazy(
+  () => import("@features/profile/components/SettingsPage"),
+);
 
 // Loading helper component
 const PageLoader = () => (
@@ -106,6 +109,16 @@ function App() {
                 <PrivateRoute>
                   <AuthGuard>
                     <UserProfile />
+                  </AuthGuard>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <PrivateRoute>
+                  <AuthGuard>
+                    <SettingsPage />
                   </AuthGuard>
                 </PrivateRoute>
               }

@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Lock, Eye, EyeOff } from "lucide-react";
+import { Lock, Eye, EyeOff, AlertTriangle, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useResetPassword } from "../hooks/useResetPassword";
@@ -34,10 +34,37 @@ export default function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-900 via-emerald-800 to-teal-900">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
-          <p className="text-red-600">Token inválido o expirado</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 via-white to-emerald-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-sm w-full border-2 border-amber-100"
+        >
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-amber-500" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Enlace no válido
+          </h2>
+          <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+            Este enlace para restablecer la contraseña ha expirado o no es
+            válido. Solicita uno nuevo desde tu correo.
+          </p>
+          <button
+            onClick={() => navigate("/forgot-password")}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 rounded-xl font-semibold transition-all shadow-md"
+          >
+            <Mail className="w-4 h-4" />
+            Solicitar nuevo enlace
+          </button>
+          <button
+            onClick={() => navigate("/login")}
+            className="mt-3 w-full text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            Volver al inicio de sesión
+          </button>
+        </motion.div>
       </div>
     );
   }

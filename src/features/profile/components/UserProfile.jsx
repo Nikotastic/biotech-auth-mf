@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   User,
@@ -6,23 +6,21 @@ import {
   Shield,
   Calendar,
   LogOut,
-  Settings,
-  Building2,
-  Edit2,
   Lock,
+  MapPin,
+  ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useProfile } from "../hooks/useProfile";
-import { useAuth } from "@shared/hooks/useAuth";
+import { useAuthStore } from "@shared/store/authStore";
 import { useToastStore } from "@shared/store/toastStore";
 
 export default function UserProfile() {
   const navigate = useNavigate();
-  const { profile } = useProfile();
-  const { isAuthenticated, selectedFarm, logout } = useAuth();
+  const { user, isAuthenticated, selectedFarm, logout } = useAuthStore();
   const addToast = useToastStore((state) => state.addToast);
-  const [showEditModal, setShowEditModal] = useState(false);
 
+  /* Si no está autenticado, redirigir al login */
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
@@ -33,16 +31,20 @@ export default function UserProfile() {
     addToast("👋 Cerrando sesión...", "info");
     setTimeout(() => {
       logout();
-      // Emitir evento para sincronización
-      window.dispatchEvent(new Event("auth-change"));
-      // Redirigir al login
       navigate("/login");
     }, 500);
   };
 
-  const handleBackToDashboard = () => {
-    navigate("/dashboard");
-  };
+  /* Usar datos del store directamente — siempre disponibles tras el login */
+  const profile = user
+    ? {
+        name:
+          user.name || user.username || user.email?.split("@")[0] || "Usuario",
+        email: user.email || "",
+        role: user.role || "Operador",
+        createdAt: user.createdAt || user.created_at || null,
+      }
+    : null;
 
   if (!profile) {
     return (
@@ -61,19 +63,19 @@ export default function UserProfile() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex justify-between items-center gap-2">
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-800">
-              Mi Perfil
-            </h1>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors group"
+                title="Volver al Dashboard"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-green-600 group-hover:-translate-x-1 transition-all" />
+              </button>
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-800">
+                Mi Perfil
+              </h1>
+            </div>
             <div className="flex gap-2 sm:gap-3">
-              {selectedFarm && (
-                <button
-                  onClick={handleBackToDashboard}
-                  className="px-2 sm:px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors font-medium flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-                >
-                  <Building2 className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">Volver al Dashboard</span>
-                </button>
-              )}
               <button
                 onClick={handleLogout}
                 className="px-2 sm:px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-medium flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
@@ -120,7 +122,7 @@ export default function UserProfile() {
                     Granja Actual
                   </p>
                   <div className="flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600 shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600 shrink-0" />
                     <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
                       {selectedFarm.name}
                     </p>
@@ -143,14 +145,7 @@ export default function UserProfile() {
                 <h3 className="text-base sm:text-lg font-bold text-gray-800">
                   Información Personal
                 </h3>
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  className="p-1.5 sm:p-2 hover:bg-green-50 rounded-lg transition-colors"
-                >
-                  <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                </button>
               </div>
-
               <div className="space-y-2 sm:space-y-4">
                 <div className="flex items-center gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg">
                   <User className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" />
@@ -222,7 +217,7 @@ export default function UserProfile() {
 
               <div className="space-y-3">
                 <button
-                  onClick={() => navigate("/reset-password")}
+                  onClick={() => navigate("/forgot-password")}
                   className="w-full flex items-center justify-between p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
                 >
                   <div className="flex items-center gap-2 sm:gap-3">
@@ -236,7 +231,7 @@ export default function UserProfile() {
                       </p>
                     </div>
                   </div>
-                  <Edit2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 group-hover:translate-x-1 transition-transform shrink-0" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 group-hover:translate-x-1 transition-transform shrink-0" />
                 </button>
               </div>
             </div>
