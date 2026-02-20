@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@shared/store/authStore";
-import apiClient from "@shared/utils/apiClient";
-import { profileServiceMock } from "../services/profileServiceMock";
-
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
+import { profileService } from "../services/profileService";
 
 export const useProfile = () => {
   const { user, token, logout } = useAuthStore();
@@ -14,15 +11,9 @@ export const useProfile = () => {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      if (USE_MOCK_API) {
-        const data = await profileServiceMock.getProfile();
-        setProfileData(data);
-        return data;
-      }
-      
-      const response = await apiClient.get("/auth/profile");
-      setProfileData(response.data);
-      return response.data;
+      const data = await profileService.getProfile();
+      setProfileData(data);
+      return data;
     } catch (err) {
       console.error("Error fetching profile", err);
     } finally {
@@ -31,7 +22,6 @@ export const useProfile = () => {
   };
 
   useEffect(() => {
-    // Initial fetch to ensure we have latest data
     if (token) {
       if (user) setProfileData(user); // Optimistic
       fetchProfile();
@@ -43,16 +33,9 @@ export const useProfile = () => {
     setError(null);
 
     try {
-      if (USE_MOCK_API) {
-        await profileServiceMock.updateProfile(data);
-        setProfileData((prev) => ({ ...prev, ...data }));
-        return { success: true };
-      }
-      
-      // Corrected endpoint path to match ProfileController: api/auth/profile
-      const response = await apiClient.put("/auth/profile", data);
-      setProfileData((prev) => ({ ...prev, ...data })); // Optimistic or use response if it returns updated data
-      return response.data;
+      const result = await profileService.updateProfile(data);
+      setProfileData((prev) => ({ ...prev, ...data }));
+      return result;
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || "Error al actualizar perfil";
@@ -65,8 +48,6 @@ export const useProfile = () => {
 
   const handleLogout = () => {
     logout();
-    // Notificar cambio de autenticación para sincronizar
-    window.dispatchEvent(new Event("auth-change"));
     window.location.href = "/";
   };
 

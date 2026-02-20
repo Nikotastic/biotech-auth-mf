@@ -28,7 +28,7 @@ export default function FarmSelector() {
 
   const [farms, setFarms] = useState([]);
   const [selectedFarmLocal, setSelectedFarmLocal] = useState(
-    storedSelectedFarm?.id || null
+    storedSelectedFarm?.id || null,
   );
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -81,7 +81,7 @@ export default function FarmSelector() {
         ]);
         addToast(
           "Modo Prueba: Granja demo activada por error de conexión.",
-          "info"
+          "info",
         );
       } finally {
         setLoading(false);
@@ -105,14 +105,10 @@ export default function FarmSelector() {
       setSelectedFarm(farm);
       addToast(
         `✅ Granja "${farm.name}" seleccionada correctamente`,
-        "success"
+        "success",
       );
-      setTimeout(() => {
-        // Force a hard reload or ensure router knows where dashboard is
-        // Usually navigate('/dashboard') is enough if it's SPA
-        // But if it's shell, we might need window.location
-        navigate("/dashboard");
-      }, 300);
+      // Navegación inmediata tras selección
+      navigate("/dashboard");
     } else {
       addToast("❌ Error al seleccionar la granja", "error");
     }
@@ -137,17 +133,17 @@ export default function FarmSelector() {
       if (error.response?.status === 404) {
         addToast(
           "🚧 Funcionalidad en mantenimiento. Pronto podrás crear granjas desde aquí.",
-          "warning"
+          "warning",
         );
       } else if (error.response?.status === 500) {
         addToast(
           "⚠️ Error del servidor. Por favor intenta más tarde.",
-          "error"
+          "error",
         );
       } else {
         addToast(
           "❌ Error al crear la granja. Verifica tu conexión e intenta nuevamente.",
-          "error"
+          "error",
         );
       }
       throw error; // Re-throw to let modal handle it

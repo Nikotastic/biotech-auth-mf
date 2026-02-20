@@ -51,7 +51,8 @@ export default function LoginForm() {
         await new Promise((resolve) => setTimeout(resolve, 600));
 
         // Forzar navegación completa para cargar el shell con Layout
-        window.location.href = "/farm-selector";
+        // Usar navigate en lugar de window.location para evitar recargas completas
+        navigate("/farm-selector");
       } catch (farmError) {
         // If loading farms fails, go to farm-selector by default
         console.error("Error al verificar granjas:", farmError);
@@ -60,7 +61,7 @@ export default function LoginForm() {
           "warning",
         );
         await new Promise((resolve) => setTimeout(resolve, 600));
-        window.location.href = "/farm-selector";
+        navigate("/farm-selector");
       }
     } catch (err) {
       console.error("Login error:", err);

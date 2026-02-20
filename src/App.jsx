@@ -17,9 +17,11 @@ import { Unauthorized, NotFound } from "@shared/components/errors";
 import { ROLES, PERMISSIONS } from "@shared/constants/roles";
 
 function App() {
+  const isStandalone = window.location.port === "5001" || !window.location.port;
+
   return (
     <>
-      <ToastContainer />
+      {isStandalone && <ToastContainer />}
       <BrowserRouter>
         <Routes>
           {/* Rutas Públicas - Redirigen a /farm-selector si el usuario ya está autenticado */}
