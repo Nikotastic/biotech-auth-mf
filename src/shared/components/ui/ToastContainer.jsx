@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from "lucide-react";
 import { useToastStore } from "../../store/toastStore";
@@ -160,14 +161,26 @@ function Toast({ toast, onRemove }) {
 
 /* ─── Contenedor principal ───────────────────────────────────────── */
 export function ToastContainer() {
-  const { toasts, removeToast } = useToastStore();
+  const { toasts, removeToast, addToast } = useToastStore();
+
+  // Escuchar eventos globales para microfrontends que no comparten el store
+  useEffect(() => {
+    const handleGlobalToast = (event) => {
+      if (event.detail && event.detail.message) {
+        addToast(event.detail.message, event.detail.type || "info");
+      }
+    };
+
+    window.addEventListener("biotech-toast", handleGlobalToast);
+    return () => window.removeEventListener("biotech-toast", handleGlobalToast);
+  }, [addToast]);
 
   return (
     <div
       className="fixed top-4 sm:top-6 left-0 right-0 sm:left-auto sm:right-5 flex flex-col items-center sm:items-end gap-2.5 sm:gap-3 w-full sm:w-auto sm:max-w-[440px] pointer-events-none px-3 sm:px-0"
       style={{ zIndex: 999999 }}
     >
-      <AnimatePresence mode="sync">
+      <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <Toast key={toast.id} toast={toast} onRemove={removeToast} />
         ))}

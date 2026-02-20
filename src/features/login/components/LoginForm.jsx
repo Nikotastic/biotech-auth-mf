@@ -9,7 +9,6 @@ import { loginSchema } from "../validations/loginSchema";
 import { useToastStore } from "@shared/store/toastStore";
 import { farmService } from "@features/farm/services/farmService";
 import { handleAuthError } from "@shared/utils/authErrorHandler";
-import { ToastContainer } from "@shared/components/ui/ToastContainer";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -277,7 +276,6 @@ export default function LoginForm() {
           </motion.div>
         </motion.div>
       </div>
-      <ToastContainer />
     </div>
   );
 }
