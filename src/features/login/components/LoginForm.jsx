@@ -8,6 +8,7 @@ import { useLogin } from "../hooks/useLogin";
 import { loginSchema } from "../validations/loginSchema";
 import { useToastStore } from "@shared/store/toastStore";
 import { farmService } from "@features/farm/services/farmService";
+import { handleAuthError } from "@shared/utils/authErrorHandler";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,71 +28,38 @@ export default function LoginForm() {
       const loginData = await login(data);
       addToast("✅ Sesión iniciada correctamente. Bienvenido!", "success");
 
-      // Check if user has farms
+      // Verificar granjas del usuario
       try {
         const farms = await farmService.getUserFarms(
           loginData.token,
           loginData.user.id,
         );
-        if (farms && farms.length > 0) {
-          // If user has farms, go to selector
+
+        if (farms?.length > 0) {
           addToast(
             `📊 Se encontraron ${farms.length} granja(s) disponible(s)`,
             "success",
           );
         } else {
-          // If you do not have farms, go to selector to create one
           addToast(
             "ℹ️ No tienes granjas registradas. Vamos a crear una.",
             "info",
           );
         }
 
-        // Esperar a que Zustand persista y las alertas se muestren
-        await new Promise((resolve) => setTimeout(resolve, 600));
-
-        // Forzar navegación completa para cargar el shell con Layout
-        // Usar navigate en lugar de window.location para evitar recargas completas
-        navigate("/farm-selector");
+        // Pequeña pausa para que el usuario vea el mensaje
+        setTimeout(() => navigate("/farm-selector"), 800);
       } catch (farmError) {
-        // If loading farms fails, go to farm-selector by default
         console.error("Error al verificar granjas:", farmError);
         addToast(
           "⚠️ No se pudieron cargar las granjas. Redirigiendo...",
           "warning",
         );
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        navigate("/farm-selector");
+        setTimeout(() => navigate("/farm-selector"), 800);
       }
     } catch (err) {
-      console.error("Login error:", err);
-
-      // Specific handling of login errors
-      const errorData = err.response?.data;
-      const statusCode = err.response?.status;
-      let errorMessage = "Error al iniciar sesión";
-
-      if (statusCode === 401) {
-        // Invalid credentials
-        errorMessage =
-          "🔒 Credenciales incorrectas. Verifica tu correo y contraseña.";
-      } else if (statusCode === 404) {
-        errorMessage = "❌ Usuario no encontrado. ¿Ya te has registrado?";
-      } else if (statusCode === 403) {
-        errorMessage =
-          "⛔ Cuenta inactiva o bloqueada. Contacta al administrador.";
-      } else if (statusCode === 500) {
-        errorMessage =
-          "❌ Error del servidor. Por favor, intenta nuevamente más tarde.";
-      } else if (!err.response) {
-        errorMessage =
-          "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-      } else {
-        errorMessage =
-          errorData?.message || errorData || "Credenciales inválidas";
-      }
-
-      addToast(errorMessage, "error");
+      const { message } = handleAuthError(err);
+      addToast(message, "error");
     }
   };
 
