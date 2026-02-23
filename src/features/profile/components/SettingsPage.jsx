@@ -12,12 +12,28 @@ import {
   Zap,
   Clock,
   Layout,
+  ArrowLeft,
+  LogOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@shared/store/authStore";
+import { useToastStore } from "@shared/store/toastStore";
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuthStore();
+  const addToast = useToastStore((state) => state.addToast);
   const [activeTab, setActiveTab] = useState("notificaciones");
+
+  const handleLogout = () => {
+    addToast("👋 Cerrando sesión...", "info");
+    setTimeout(() => {
+      logout();
+      window.dispatchEvent(new Event("auth-change"));
+      navigate("/login");
+    }, 500);
+  };
 
   const tabs = [
     { id: "notificaciones", label: "Notificaciones", icon: Bell },
@@ -32,27 +48,36 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 transition-colors duration-300">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm mb-1 uppercase tracking-widest">
-              <Settings className="w-4 h-4" />
-              Gestión de Cuenta
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
+      {/* ── Header idéntico al perfil ── */}
+      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center gap-2">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors group"
+                title="Volver al Dashboard"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-green-600 group-hover:-translate-x-1 transition-all" />
+              </button>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+                Preferencias
+              </h1>
             </div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-              Preferencias
-            </h1>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-medium flex items-center gap-2 text-xs sm:text-sm"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+              <span className="sm:hidden">Salir</span>
+            </button>
           </div>
-          <Link
-            to="/dashboard"
-            className="text-sm font-semibold text-gray-500 hover:text-emerald-600 transition-colors flex items-center gap-1"
-          >
-            Volver al Dashboard <ChevronRight className="w-4 h-4" />
-          </Link>
         </div>
+      </div>
 
+      <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Sidebar Tabs */}
           <div className="lg:col-span-4 space-y-2">
