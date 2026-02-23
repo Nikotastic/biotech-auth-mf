@@ -26,6 +26,7 @@ export default defineConfig({
           "./src/features/password/components/ForgotPasswordForm.jsx",
         "./ResetPassword":
           "./src/features/password/components/ResetPasswordForm.jsx",
+        "./SettingsPage": "./src/features/profile/components/SettingsPage.jsx",
         "./AuthStore": "./src/shared/store/authStore.js",
         "./ToastContainer": "./src/shared/components/ui/ToastContainer.jsx",
         "./ToastStore": "./src/shared/store/toastStore.js",

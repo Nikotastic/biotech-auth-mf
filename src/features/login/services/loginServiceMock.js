@@ -63,8 +63,20 @@ export const loginServiceMock = {
       };
     }
 
-    // For demo purposes, accept any password in mock mode
-    // Remove this check in production or use strict validation
+    // Validate password
+    if (user.password !== credentials.password) {
+      console.log(
+        "❌ Mock Login - Contraseña incorrecta para:",
+        credentials.email,
+      );
+      throw {
+        response: {
+          status: 401,
+          data: { message: "Credenciales invalidas" },
+        },
+      };
+    }
+
     console.log("✅ Mock Login - Usuario autenticado:", user.email);
 
     // Generate mock JWT token

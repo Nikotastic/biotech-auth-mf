@@ -36,6 +36,11 @@ export const useAuthStore = create(
           isAuthenticated: true,
         });
 
+        // Notify environment of authentication change
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("auth-change"));
+        }
+
         console.log("✅ Authentication set successfully");
       },
 
@@ -47,6 +52,11 @@ export const useAuthStore = create(
         set({
           selectedFarm: farm,
         });
+
+        // Notify environment of preference change
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("auth-change"));
+        }
       },
 
       /**
@@ -127,6 +137,11 @@ export const useAuthStore = create(
 
         // Limpiar cookies usando tokenManager
         tokenManager.clearAuth();
+
+        // Notify environment of logout
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("auth-change"));
+        }
 
         console.log("✅ Logout successful");
       },

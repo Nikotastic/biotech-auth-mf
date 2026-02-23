@@ -8,21 +8,50 @@ export const tokenManager = {
   TOKEN_KEY: "auth_token",
 
   /**
+   * Caché interna para evitar decodificaciones repetitivas
+   */
+  _cache: {
+    raw: null,
+    decoded: null,
+  },
+
+  /**
    * Decodifica un token JWT sin verificar la firma
    * @param {string} token - Token JWT a decodificar
    * @returns {object|null} Payload del token o null si es inválido
    */
   decodeToken: (token) => {
-    try {
-      if (!token) return null;
+    if (!token) return null;
 
+    // Retornar desde caché si es el mismo token
+    if (tokenManager._cache.raw === token) {
+      return tokenManager._cache.decoded;
+    }
+
+    try {
       const parts = token.split(".");
       if (parts.length !== 3) return null;
 
       const payload = parts[1];
+      // Usar una decodificación que maneje caracteres especiales de base64url
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
       const decoded = JSON.parse(
-        atob(payload.replace(/-/g, "+").replace(/_/g, "/")),
+        decodeURIComponent(
+          atob(base64)
+            .split("")
+            .map(function (c) {
+              return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join(""),
+        ),
       );
+
+      // Actualizar caché
+      tokenManager._cache = {
+        raw: token,
+        decoded: decoded,
+      };
+
       return decoded;
     } catch (error) {
       console.error("Error decoding token:", error);
@@ -36,25 +65,15 @@ export const tokenManager = {
    * @returns {boolean} true si el token ha expirado, false en caso contrario
    */
   isTokenExpired: (token) => {
-    try {
-      const decoded = tokenManager.decodeToken(token);
+    if (!token) return true;
 
-      // Si no se puede decodificar, considerar inválido
-      if (!decoded) return true;
+    const decoded = tokenManager.decodeToken(token);
+    if (!decoded) return true;
+    if (!decoded.exp) return false;
 
-      // Si no tiene campo exp, asumir que es válido (útil para mocks)
-      if (!decoded.exp) return false;
-
-      // exp viene en segundos, Date.now() en milisegundos
-      const expirationTime = decoded.exp * 1000;
-      const currentTime = Date.now();
-
-      // Agregar un margen de 60 segundos para evitar problemas de sincronización
-      return currentTime >= expirationTime - 60000;
-    } catch (error) {
-      console.error("Error checking token expiration:", error);
-      return true;
-    }
+    // Comparación rápida: exp * 1000 vs Date.now()
+    // Margen de seguridad de 30 segundos
+    return Date.now() >= decoded.exp * 1000 - 30000;
   },
 
   /**

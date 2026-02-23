@@ -1,14 +1,17 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Link, useNavigate } from "react-router-dom";
-import { Leaf, Mail, Lock, Sparkles } from "lucide-react";
+import { Leaf, Mail, Lock, Sparkles, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogin } from "../hooks/useLogin";
 import { loginSchema } from "../validations/loginSchema";
 import { useToastStore } from "@shared/store/toastStore";
 import { farmService } from "@features/farm/services/farmService";
+import { handleAuthError } from "@shared/utils/authErrorHandler";
 
 export default function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login, loading, error } = useLogin();
   const addToast = useToastStore((state) => state.addToast);
@@ -25,70 +28,38 @@ export default function LoginForm() {
       const loginData = await login(data);
       addToast("✅ Sesión iniciada correctamente. Bienvenido!", "success");
 
-      // Check if user has farms
+      // Verificar granjas del usuario
       try {
         const farms = await farmService.getUserFarms(
           loginData.token,
-          loginData.user.id
+          loginData.user.id,
         );
-        if (farms && farms.length > 0) {
-          // If user has farms, go to selector
+
+        if (farms?.length > 0) {
           addToast(
             `📊 Se encontraron ${farms.length} granja(s) disponible(s)`,
-            "success"
+            "success",
           );
         } else {
-          // If you do not have farms, go to selector to create one
           addToast(
             "ℹ️ No tienes granjas registradas. Vamos a crear una.",
-            "info"
+            "info",
           );
         }
 
-        // Esperar a que Zustand persista y las alertas se muestren
-        await new Promise((resolve) => setTimeout(resolve, 600));
-
-        // Forzar navegación completa para cargar el shell con Layout
-        window.location.href = "/farm-selector";
+        // Pequeña pausa para que el usuario vea el mensaje
+        setTimeout(() => navigate("/farm-selector"), 800);
       } catch (farmError) {
-        // If loading farms fails, go to farm-selector by default
         console.error("Error al verificar granjas:", farmError);
         addToast(
           "⚠️ No se pudieron cargar las granjas. Redirigiendo...",
-          "warning"
+          "warning",
         );
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        window.location.href = "/farm-selector";
+        setTimeout(() => navigate("/farm-selector"), 800);
       }
     } catch (err) {
-      console.error("Login error:", err);
-
-      // Specific handling of login errors
-      const errorData = err.response?.data;
-      const statusCode = err.response?.status;
-      let errorMessage = "Error al iniciar sesión";
-
-      if (statusCode === 401) {
-        // Invalid credentials
-        errorMessage =
-          "🔒 Credenciales incorrectas. Verifica tu correo y contraseña.";
-      } else if (statusCode === 404) {
-        errorMessage = "❌ Usuario no encontrado. ¿Ya te has registrado?";
-      } else if (statusCode === 403) {
-        errorMessage =
-          "⛔ Cuenta inactiva o bloqueada. Contacta al administrador.";
-      } else if (statusCode === 500) {
-        errorMessage =
-          "❌ Error del servidor. Por favor, intenta nuevamente más tarde.";
-      } else if (!err.response) {
-        errorMessage =
-          "🔌 No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-      } else {
-        errorMessage =
-          errorData?.message || errorData || "Credenciales inválidas";
-      }
-
-      addToast(errorMessage, "error");
+      const { message } = handleAuthError(err);
+      addToast(message, "error");
     }
   };
 
@@ -129,23 +100,23 @@ export default function LoginForm() {
         }}
       />
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 px-2 sm:px-0">
         {/* Logo and Brand */}
         <motion.div
-          className="text-center mb-8"
+          className="text-center mb-6 sm:mb-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <motion.div
-            className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl mb-4 shadow-2xl"
+            className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl mb-3 sm:mb-4 shadow-2xl"
             whileHover={{ scale: 1.05, rotate: 5 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <Leaf className="w-10 h-10 text-white" />
+            <Leaf className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
           </motion.div>
           <motion.h1
-            className="text-4xl font-bold text-white mb-2"
+            className="text-3xl sm:text-4xl font-bold text-white mb-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -153,25 +124,25 @@ export default function LoginForm() {
             BioTech Farm
           </motion.h1>
           <motion.div
-            className="flex items-center justify-center gap-2 text-green-100"
+            className="flex items-center justify-center gap-2 text-green-100 px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <Sparkles className="w-4 h-4" />
-            <p className="text-sm">Sistema de Gestión de Granjas</p>
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <p className="text-xs sm:text-sm">Sistema de Gestión de Granjas</p>
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
           </motion.div>
         </motion.div>
 
         {/* Login Card */}
         <motion.div
-          className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-green-100/50"
+          className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 border border-green-100/50 transition-colors duration-300"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-bold text-green-900 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-green-900 mb-6">
             Iniciar Sesión
           </h2>
 
@@ -184,22 +155,22 @@ export default function LoginForm() {
             >
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-green-900 mb-2"
+                className="block text-xs sm:text-sm font-medium text-green-900 mb-1.5 sm:mb-2"
               >
                 Correo Electrónico
               </label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="email"
                   type="email"
                   {...register("email")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="correo@ejemplo.com"
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-xs text-red-600">
                   {errors.email.message}
                 </p>
               )}
@@ -213,53 +184,53 @@ export default function LoginForm() {
             >
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-green-900 mb-2"
+                className="block text-xs sm:text-sm font-medium text-green-900 mb-1.5 sm:mb-2"
               >
                 Contraseña
               </label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 hover:text-green-700 transition-colors focus:outline-none p-1"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                  ) : (
+                    <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
+                </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-xs text-red-600">
                   {errors.password.message}
                 </p>
               )}
               <div className="text-right mt-2">
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
+                  className="text-xs sm:text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
                 >
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
             </motion.div>
 
-            {/* Error Message */}
-            {error && (
-              <motion.div
-                className="p-3 bg-red-50 border border-red-200 rounded-lg"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                <p className="text-sm text-red-600">{error}</p>
-              </motion.div>
-            )}
-
             {/* Submit Button */}
             <motion.button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              whileHover={{ scale: loading ? 1 : 1.02 }}
-              whileTap={{ scale: loading ? 1 : 0.98 }}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-2.5 sm:py-3 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm sm:text-base mt-2"
+              whileHover={{ scale: loading ? 1 : 1.01 }}
+              whileTap={{ scale: loading ? 1 : 0.99 }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
@@ -270,14 +241,20 @@ export default function LoginForm() {
 
           {/* Demo Credentials */}
           <motion.div
-            className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200"
+            className="mt-6 p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            <p className="text-sm font-semibold text-green-800 mb-2">Demo:</p>
-            <p className="text-sm text-green-700">Usuario: user@biotech.com</p>
-            <p className="text-sm text-green-700">Admin: admin@biotech.com</p>
+            <p className="text-xs font-bold text-green-800 mb-1.5">Demo:</p>
+            <div className="space-y-0.5">
+              <p className="text-[11px] sm:text-xs text-green-700">
+                Usuario: user@biotech.com
+              </p>
+              <p className="text-[11px] sm:text-xs text-green-700">
+                Admin: admin@biotech.com
+              </p>
+            </div>
           </motion.div>
 
           {/* Switch to Register */}
@@ -287,11 +264,11 @@ export default function LoginForm() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
           >
-            <p className="text-sm text-green-700">
+            <p className="text-xs sm:text-sm text-green-700">
               ¿No tienes cuenta?{" "}
               <Link
                 to="/register"
-                className="text-green-600 hover:text-green-700 font-medium underline-offset-4 hover:underline transition-all"
+                className="text-green-600 hover:text-green-700 font-bold underline-offset-4 hover:underline transition-all"
               >
                 Registrarse
               </Link>
