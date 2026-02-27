@@ -1,13 +1,6 @@
 import apiClient from "@shared/utils/apiClient";
-import { registerServiceMock } from "./registerServiceMock";
-
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
 
 export const registerService = async (userData) => {
-  if (USE_MOCK_API) {
-    return await registerServiceMock.register(userData);
-  }
-
   try {
     // Call the backend with the expected format: { fullName, email, password }
     const response = await apiClient.post("/Auth/register", {

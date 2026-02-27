@@ -1,26 +1,7 @@
 import apiClient from "@shared/utils/apiClient";
 
-// Mock data
-const MOCK_FARMS = [
-  {
-    id: "farm-1",
-    name: "Granja Demo",
-    location: "Valle del Cauca, Colombia",
-    size: 50,
-    animalCount: 120,
-    tenantId: "user-1"
-  }
-];
-
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
-
 export const farmService = {
   async getUserFarms(token, userId) {
-    if (USE_MOCK_API) {
-      console.log('🧪 Using MOCK API for farms');
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return MOCK_FARMS.filter(f => f.tenantId === userId);
-    }
     // If token is explicitly passed, verify headers, otherwise apiClient handles it
     const config = token
       ? {
@@ -48,26 +29,20 @@ export const farmService = {
       throw new Error("User ID is required to fetch farms");
     }
 
-    // Correct endpoint matching FarmController.cs: [HttpGet("tenant/{tenantId}")] inside [Route("api/[controller]")]
-    // So the path is /Farm/tenant/{id}
-    const response = await apiClient.get(`/Farm/tenant/${userId}`, config);
+    // Updated to v1 endpoint: GET /api/v1/Farms/tenant/{userId}
+    const response = await apiClient.get(`/v1/Farms/tenant/${userId}`, config);
+    return response.data;
+  },
+
+  async getFarmById(id) {
+    // GET /api/v1/Farms/{id}
+    const response = await apiClient.get(`/v1/Farms/${id}`);
     return response.data;
   },
 
   async createFarm(farmData) {
-    if (USE_MOCK_API) {
-      console.log('🧪 Using MOCK API - creating farm');
-      await new Promise(resolve => setTimeout(resolve, 300));
-      const newFarm = {
-        id: `farm-${MOCK_FARMS.length + 1}`,
-        ...farmData,
-        animalCount: 0
-      };
-      MOCK_FARMS.push(newFarm);
-      return newFarm;
-    }
-    // POST /api/Farm
-    const response = await apiClient.post("/Farm", farmData);
+    // POST /api/v1/Farms
+    const response = await apiClient.post("/v1/Farms", farmData);
     return response.data;
   },
 };

@@ -43,22 +43,7 @@ export default function FarmSelector() {
         }
         const data = await farmService.getUserFarms(token, user?.id);
         // Ensure data is an array
-        let farmList = Array.isArray(data) ? data : [];
-
-        // Inject Demo Farm if empty (Requested by User for testing)
-        if (farmList.length === 0) {
-          farmList = [
-            {
-              id: "demo-farm-id",
-              name: "Granja de Prueba 🚀",
-              location: "Virtual",
-              size: "N/A",
-              animals: 0,
-              productivity: "100%",
-            },
-          ];
-          addToast("Modo Prueba: Se ha generado una granja temporal.", "info");
-        }
+        const farmList = Array.isArray(data) ? data : [];
 
         setFarms(farmList);
 
@@ -68,20 +53,10 @@ export default function FarmSelector() {
         }
       } catch (error) {
         console.error("Error fetching farms:", error);
-        // Fallback to Demo Farm on error (for testing purposes as requested)
-        setFarms([
-          {
-            id: "demo-farm-id",
-            name: "Granja de Prueba 🚀",
-            location: "Virtual",
-            size: "N/A",
-            animals: 0,
-            productivity: "100%",
-          },
-        ]);
+        setFarms([]);
         addToast(
-          "Modo Prueba: Granja demo activada por error de conexión.",
-          "info",
+          "Error al cargar tus granjas. Por favor verifica tu conexión.",
+          "error",
         );
       } finally {
         setLoading(false);
