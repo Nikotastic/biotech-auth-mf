@@ -2,15 +2,14 @@ import axios from "axios";
 import { useAuthStore } from "@shared/store/authStore";
 import { tokenManager } from "@shared/utils/tokenManager";
 
-// Get API URL from environment or use mock mode
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
+// Get API URL from environment
 const API_URL =
   import.meta.env.VITE_API_GATEWAY_URL ||
-  "https://api-gateway-bio-tech.up.railway.app/api";
+  "https://api.biotech.159.54.176.254.nip.io/api";
 
 // Cliente de API configurado para el Gateway
 const apiClient = axios.create({
-  baseURL: USE_MOCK_API ? "http://localhost:9999/mock-api" : API_URL,
+  baseURL: API_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -80,9 +79,7 @@ apiClient.interceptors.response.use(
       window.dispatchEvent(new Event("auth-change"));
 
       // Redirigir al login solo si no estamos ya en la página de login
-      if (!window.location.pathname.includes("/login")) {
-        window.location.href = "/login";
-      }
+      window.dispatchEvent(new Event("auth-change"));
     }
 
     // Manejar errores de permisos
