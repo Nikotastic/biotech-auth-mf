@@ -13,7 +13,29 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "@shared/store/authStore";
 import alertService from "@shared/utils/alertService";
 import { farmService } from "../services/farmService";
+import { profileService } from "@features/profile/services/profileService";
 import { CreateFarmModal } from "./CreateFarmModal";
+
+// Helper function to normalize farm object (handles nested .data and case variations)
+const normalizeFarm = (f, fallback = {}) => {
+  const raw = f?.data || f || {};
+  // Extract nested data if backend wraps it
+  const d = raw.data && typeof raw.data === "object" ? raw.data : raw;
+
+  return {
+    id: String(d.id || d.Id || fallback.id || Date.now()),
+    name: d.name || d.Name || fallback.name || "Granja sin nombre",
+    location:
+      d.address ||
+      d.geographicLocation ||
+      d.location ||
+      fallback.location ||
+      "Sin ubicación",
+    animals: d.animals || d.animalCount || 0,
+    size: d.size || 0,
+    description: d.description || "",
+  };
+};
 
 export default function FarmSelector() {
   const navigate = useNavigate();
@@ -26,7 +48,7 @@ export default function FarmSelector() {
 
   const [farms, setFarms] = useState([]);
   const [selectedFarmLocal, setSelectedFarmLocal] = useState(
-    storedSelectedFarm?.id || null
+    storedSelectedFarm?.id || null,
   );
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -63,10 +85,12 @@ export default function FarmSelector() {
           );
         }
 
+        console.log("✅ Final Farm List:", farmList);
         setFarms(farmList);
 
         // If there's only one farm, select it by default
         if (farmList.length === 1 && !selectedFarmLocal) {
+          console.log("🔄 Auto-selecting single farm:", farmList[0].id);
           setSelectedFarmLocal(farmList[0].id);
         }
       } catch (error) {
@@ -92,13 +116,19 @@ export default function FarmSelector() {
     };
 
     fetchFarms();
-  }, [token]);
+  }, [token, user?.id]);
+
+  console.log("🎨 Rendering FarmSelector:", {
+    farmsCount: farms.length,
+    selectedId: selectedFarmLocal,
+    buttonActive: !!selectedFarmLocal,
+  });
 
   const handleSelect = (farmId) => {
     setSelectedFarmLocal(farmId);
   };
 
-  const onSelectFarm = (farmId) => {
+  const onSelectFarm = async (farmId) => {
     if (!farmId) {
       alertService.warning(
         "Por favor selecciona una granja",
@@ -108,17 +138,14 @@ export default function FarmSelector() {
     }
     const farm = farms.find((f) => f.id === farmId);
     if (farm) {
+      // 1. Guardar en el Store local
       setSelectedFarm(farm);
       alertService.success(
         `Granja "${farm.name}" seleccionada correctamente`,
         "Éxito"
       );
-      setTimeout(() => {
-        // Force a hard reload or ensure router knows where dashboard is
-        // Usually navigate('/dashboard') is enough if it's SPA
-        // But if it's shell, we might need window.location
-        navigate("/dashboard");
-      }, 300);
+      // Navegación inmediata tras selección
+      navigate("/dashboard");
     } else {
       alertService.error("Error al seleccionar la granja", "Error");
     }
@@ -165,7 +192,7 @@ export default function FarmSelector() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
       </div>
     );

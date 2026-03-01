@@ -38,6 +38,7 @@ export default defineConfig({
           "./src/features/password/components/ForgotPasswordForm.jsx",
         "./ResetPassword":
           "./src/features/password/components/ResetPasswordForm.jsx",
+        "./SettingsPage": "./src/features/profile/components/SettingsPage.jsx",
         "./AuthStore": "./src/shared/store/authStore.js",
       },
       shared: {

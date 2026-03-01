@@ -22,7 +22,6 @@ export const useProfile = () => {
   };
 
   useEffect(() => {
-    // Initial fetch to ensure we have latest data
     if (token) {
       if (user) setProfileData(user);
       // fetchProfile(); // Evitar sobrescritura con datos vacíos del backend
@@ -61,8 +60,6 @@ export const useProfile = () => {
 
   const handleLogout = () => {
     logout();
-    // Notificar cambio de autenticación para sincronizar
-    window.dispatchEvent(new Event("auth-change"));
     window.location.href = "/";
   };
 

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate, Link } from "react-router-dom";
@@ -9,6 +10,8 @@ import {
   Sparkles,
   Check,
   X as XIcon,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRegister } from "../hooks/useRegister";
@@ -16,6 +19,8 @@ import { registerSchema } from "../validations/registerSchema";
 import alertService from "@shared/utils/alertService";
 
 export default function RegisterForm() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { register: registerUser, loading, error } = useRegister();
 
@@ -99,6 +104,11 @@ export default function RegisterForm() {
 
   const requirements = [
     { label: "Mínimo 6 caracteres", met: password.length >= 6 },
+    { label: "Al menos un número", met: /[0-9]/.test(password) },
+    {
+      label: "Al menos un carácter especial",
+      met: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    },
     {
       label: "Las contraseñas coinciden",
       met: password && password === confirmPassword && password.length >= 6,
@@ -142,23 +152,23 @@ export default function RegisterForm() {
         }}
       />
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 px-2 sm:px-0">
         {/* Logo and Brand */}
         <motion.div
-          className="text-center mb-8"
+          className="text-center mb-6 sm:mb-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <motion.div
-            className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl mb-4 shadow-2xl"
+            className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl mb-3 sm:mb-4 shadow-2xl"
             whileHover={{ scale: 1.05, rotate: -5 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <Leaf className="w-10 h-10 text-white" />
+            <Leaf className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
           </motion.div>
           <motion.h1
-            className="text-4xl font-bold text-white mb-2"
+            className="text-3xl sm:text-4xl font-bold text-white mb-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -166,29 +176,32 @@ export default function RegisterForm() {
             BioTech Farm
           </motion.h1>
           <motion.div
-            className="flex items-center justify-center gap-2 text-green-100"
+            className="flex items-center justify-center gap-2 text-green-100 px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <Sparkles className="w-4 h-4" />
-            <p>Registro de Nueva Granja</p>
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <p className="text-xs sm:text-sm">Registro de Nueva Granja</p>
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
           </motion.div>
         </motion.div>
 
         {/* Register Card */}
         <motion.div
-          className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-green-100/50"
+          className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 border border-green-100/50 transition-colors duration-300"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-bold text-green-900 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-green-900 mb-6">
             Crear Cuenta
           </h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-3 sm:space-y-4"
+          >
             {/* Name Input */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -197,22 +210,22 @@ export default function RegisterForm() {
             >
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-green-900 mb-2"
+                className="block text-xs sm:text-sm font-medium text-green-900 mb-1.5 sm:mb-2"
               >
                 Nombre Completo
               </label>
               <div className="relative group">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="name"
                   type="text"
                   {...register("name")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="Juan Pérez"
                 />
               </div>
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-xs text-red-600">
                   {errors.name.message}
                 </p>
               )}
@@ -226,22 +239,22 @@ export default function RegisterForm() {
             >
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-green-900 mb-2"
+                className="block text-xs sm:text-sm font-medium text-green-900 mb-1.5 sm:mb-2"
               >
                 Correo Electrónico
               </label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="email"
                   type="email"
                   {...register("email")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="correo@ejemplo.com"
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-xs text-red-600">
                   {errors.email.message}
                 </p>
               )}
@@ -255,22 +268,33 @@ export default function RegisterForm() {
             >
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-green-900 mb-2"
+                className="block text-xs sm:text-sm font-medium text-green-900 mb-1.5 sm:mb-2"
               >
                 Contraseña
               </label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 hover:text-green-700 transition-colors focus:outline-none p-1"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                  ) : (
+                    <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
+                </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-xs text-red-600">
                   {errors.password.message}
                 </p>
               )}
@@ -284,22 +308,33 @@ export default function RegisterForm() {
             >
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-green-900 mb-2"
+                className="block text-xs sm:text-sm font-medium text-green-900 mb-1.5 sm:mb-2"
               >
                 Confirmar Contraseña
               </label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-green-500 group-focus-within:text-green-600 transition-colors" />
                 <input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   {...register("confirmPassword")}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 bg-white border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 hover:text-green-700 transition-colors focus:outline-none p-1"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                  ) : (
+                    <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
+                </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-xs text-red-600">
                   {errors.confirmPassword.message}
                 </p>
               )}
@@ -310,17 +345,17 @@ export default function RegisterForm() {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
-                className="space-y-2 bg-gray-50/50 p-3 rounded-xl"
+                className="space-y-1.5 sm:space-y-2 bg-gray-50/50 p-3 rounded-xl border border-gray-100 transition-colors"
               >
                 {requirements.map((req, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 text-xs transition-colors duration-300"
+                    className="flex items-center gap-2 text-[10px] sm:text-xs transition-colors duration-300"
                   >
                     {req.met ? (
-                      <Check className="w-3 h-3 text-green-600" />
+                      <Check className="w-3 h-3 text-green-600 shrink-0" />
                     ) : (
-                      <div className="w-3 h-3 rounded-full border border-gray-300" />
+                      <div className="w-3 h-3 rounded-full border border-gray-300 shrink-0" />
                     )}
                     <span
                       className={
@@ -341,7 +376,7 @@ export default function RegisterForm() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
               >
-                <p className="text-sm text-red-600">{error}</p>
+                <p className="text-xs text-red-600">{error}</p>
               </motion.div>
             )}
 
@@ -349,9 +384,9 @@ export default function RegisterForm() {
             <motion.button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-3 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              whileHover={{ scale: loading ? 1 : 1.02 }}
-              whileTap={{ scale: loading ? 1 : 0.98 }}
+              className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-2.5 sm:py-3 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm sm:text-base mt-2"
+              whileHover={{ scale: loading ? 1 : 1.01 }}
+              whileTap={{ scale: loading ? 1 : 0.99 }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
@@ -367,11 +402,11 @@ export default function RegisterForm() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
           >
-            <p className="text-sm text-green-700">
+            <p className="text-xs sm:text-sm text-green-700">
               ¿Ya tienes cuenta?{" "}
               <Link
                 to="/login"
-                className="text-green-600 hover:text-green-700 font-medium underline-offset-4 hover:underline transition-all"
+                className="text-green-600 hover:text-green-700 font-bold underline-offset-4 hover:underline transition-all"
               >
                 Iniciar Sesión
               </Link>

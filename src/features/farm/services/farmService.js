@@ -1,7 +1,8 @@
 import apiService from "@shared-services/ApiService";
 
 export const farmService = {
-  async getUserFarms(token, userId) {
+  async getUserFarms(token, userIdArg) {
+    let userId = userIdArg;
     // If token is explicitly passed, verify headers, otherwise apiClient handles it
     const config = token
       ? {

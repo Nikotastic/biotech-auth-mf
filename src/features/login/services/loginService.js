@@ -2,6 +2,7 @@ import apiService from "@shared-services/ApiService";
 
 export const loginService = {
   login: async (credentials) => {
+    // Use real API
     try {
       // Call the backend with the expected format: { email, password }
       const response = await apiService.post("/Auth/login", {
