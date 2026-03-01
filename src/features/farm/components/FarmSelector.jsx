@@ -14,7 +14,29 @@ import { useAuthStore } from "@shared/store/authStore";
 import { useToastStore } from "@shared/store/toastStore";
 import { ToastContainer } from "@shared/components/ui/ToastContainer";
 import { farmService } from "../services/farmService";
+import { profileService } from "@features/profile/services/profileService";
 import { CreateFarmModal } from "./CreateFarmModal";
+
+// Helper function to normalize farm object (handles nested .data and case variations)
+const normalizeFarm = (f, fallback = {}) => {
+  const raw = f?.data || f || {};
+  // Extract nested data if backend wraps it
+  const d = raw.data && typeof raw.data === "object" ? raw.data : raw;
+
+  return {
+    id: String(d.id || d.Id || fallback.id || Date.now()),
+    name: d.name || d.Name || fallback.name || "Granja sin nombre",
+    location:
+      d.address ||
+      d.geographicLocation ||
+      d.location ||
+      fallback.location ||
+      "Sin ubicación",
+    animals: d.animals || d.animalCount || 0,
+    size: d.size || 0,
+    description: d.description || "",
+  };
+};
 
 export default function FarmSelector() {
   const navigate = useNavigate();
@@ -41,14 +63,21 @@ export default function FarmSelector() {
           setLoading(false);
           return;
         }
-        const data = await farmService.getUserFarms(token, user?.id);
-        // Ensure data is an array
-        const farmList = Array.isArray(data) ? data : [];
+        const response = await farmService.getUserFarms(token, user?.id);
+        // Extract the array from the v1 endpoint. Check both data.data and response.data
+        const rawList = response?.data?.data || response?.data || response;
+        console.log("📡 Raw Farms response:", { response, rawList });
 
+        const farmList = (Array.isArray(rawList) ? rawList : []).map((f) =>
+          normalizeFarm(f),
+        );
+
+        console.log("✅ Final Farm List:", farmList);
         setFarms(farmList);
 
         // If there's only one farm, select it by default
         if (farmList.length === 1 && !selectedFarmLocal) {
+          console.log("🔄 Auto-selecting single farm:", farmList[0].id);
           setSelectedFarmLocal(farmList[0].id);
         }
       } catch (error) {
@@ -64,20 +93,44 @@ export default function FarmSelector() {
     };
 
     fetchFarms();
-  }, [token]);
+  }, [token, user?.id]);
+
+  console.log("🎨 Rendering FarmSelector:", {
+    farmsCount: farms.length,
+    selectedId: selectedFarmLocal,
+    buttonActive: !!selectedFarmLocal,
+  });
 
   const handleSelect = (farmId) => {
     setSelectedFarmLocal(farmId);
   };
 
-  const onSelectFarm = (farmId) => {
+  const onSelectFarm = async (farmId) => {
     if (!farmId) {
       addToast("⚠️ Por favor selecciona una granja", "warning");
       return;
     }
     const farm = farms.find((f) => f.id === farmId);
     if (farm) {
+      // 1. Guardar en el Store local
       setSelectedFarm(farm);
+
+      // 2. Intentar guardar en la Base de Datos con el Profile
+      try {
+        console.log(
+          "📡 Intentando guardar preferencia en DB para el usuario:",
+          user.id,
+        );
+        await profileService.updateProfile({
+          preferredFarmId: farm.id,
+          // Pasamos el ID al backend por si tiene una columna de granja preferida
+          farmId: farm.id,
+        });
+      } catch (err) {
+        // No bloqueamos la navegación si falla la BD, pero avisamos al log
+        console.warn("⚠️ Error guardando preferencia en DB:", err);
+      }
+
       addToast(
         `✅ Granja "${farm.name}" seleccionada correctamente`,
         "success",
@@ -95,12 +148,32 @@ export default function FarmSelector() {
 
   const handleCreateFarmSubmit = async (farmData) => {
     try {
-      const newFarm = await farmService.createFarm(farmData);
-      addToast(`✅ Granja "${farmData.name}" creada exitosamente`, "success");
-      // Add new farm to list
-      setFarms((prev) => [...prev, newFarm]);
-      // Auto-select the new farm
-      setSelectedFarmLocal(newFarm.id);
+      const payload = {
+        ...farmData,
+        tenantId: user?.id,
+        TenantId: user?.id,
+        userId: user?.id,
+        UserId: user?.id,
+        clientId: user?.id,
+        size: parseFloat(farmData.size) || 0,
+        address: farmData.location,
+        geographicLocation: farmData.location,
+      };
+
+      console.log("🚀 Payload de creación (para vincular usuario):", payload);
+      const response = await farmService.createFarm(payload);
+      // Normalize the response from backend
+      const normalizedNewFarm = normalizeFarm(response, farmData);
+
+      addToast(
+        `✅ Granja "${normalizedNewFarm.name}" creada exitosamente`,
+        "success",
+      );
+
+      // Add normalized farm to list
+      setFarms((prev) => [...prev, normalizedNewFarm]);
+      // Auto-select using the string ID
+      setSelectedFarmLocal(normalizedNewFarm.id);
     } catch (error) {
       console.error("Error creating farm:", error);
 

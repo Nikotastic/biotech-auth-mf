@@ -49,12 +49,26 @@ export const useAuthStore = create(
        * @param {object} farm - Datos de la granja
        */
       setSelectedFarm: (farm) => {
+        console.log("💾 Persisting selected farm:", farm);
         set({
           selectedFarm: farm,
         });
 
         // Notify environment of preference change
         if (typeof window !== "undefined") {
+          // Guardar una copia extra en localStorage para mayor seguridad si el middleware falla
+          try {
+            const authStorage = JSON.parse(
+              localStorage.getItem("auth-storage") || "{}",
+            );
+            if (authStorage.state) {
+              authStorage.state.selectedFarm = farm;
+              localStorage.setItem("auth-storage", JSON.stringify(authStorage));
+            }
+          } catch (e) {
+            console.error("Error manual persisting farm", e);
+          }
+
           window.dispatchEvent(new Event("auth-change"));
         }
       },

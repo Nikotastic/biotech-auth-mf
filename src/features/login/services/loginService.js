@@ -10,8 +10,30 @@ export const loginService = {
         password: credentials.password,
       });
 
-      // Backend returns: { token, expiration, userId, email, fullName }
-      const { token, userId, email, fullName } = response.data;
+      const data = response.data;
+      console.log("📡 Raw Login Response:", data);
+
+      // Resilient extraction: check both top-level and nested 'data' object
+      const actualData = data?.data || data;
+
+      // Resilient ID extraction (handles both camelCase and PascalCase)
+      const userId =
+        actualData.userId || actualData.id || actualData.Id || actualData.sub;
+      const fullName =
+        actualData.fullName ||
+        actualData.name ||
+        actualData.FullName ||
+        actualData.Name;
+      const email = actualData.email || actualData.Email;
+      const token =
+        actualData.token ||
+        actualData.Token ||
+        actualData.jwt ||
+        actualData.access_token;
+
+      if (!token) {
+        console.warn("⚠️ No token found in responsive! data:", actualData);
+      }
 
       // Adapt to the format expected by the frontend
       return {

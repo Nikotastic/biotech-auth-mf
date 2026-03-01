@@ -37,6 +37,21 @@ apiClient.interceptors.request.use(
 
       // Agregar token al header
       config.headers.Authorization = `Bearer ${token}`;
+
+      // Inyectar el farmId si existe una granja seleccionada
+      const selectedFarm = authState.selectedFarm;
+      if (selectedFarm && selectedFarm.id) {
+        // Enviar como Header (estándar para microservicios)
+        config.headers["X-Farm-Id"] = selectedFarm.id;
+
+        // Opcional: Inyectar también en los params si es una petición GET
+        if (config.method === "get") {
+          config.params = {
+            ...config.params,
+            farmId: selectedFarm.id,
+          };
+        }
+      }
     }
 
     return config;
