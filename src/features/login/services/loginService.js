@@ -1,27 +1,40 @@
-import apiClient from '@shared/utils/apiClient'
-import { loginServiceMock } from './loginServiceMock'
-
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
+import apiClient from "@shared/utils/apiClient";
 
 export const loginService = {
   login: async (credentials) => {
-    // Use mock service if enabled
-    if (USE_MOCK_API) {
-      console.log('🧪 Using MOCK API for login');
-      return await loginServiceMock.login(credentials);
-    }
-
     // Use real API
     try {
       // Call the backend with the expected format: { email, password }
-      const response = await apiClient.post('/Auth/login', {
+      const response = await apiClient.post("/Auth/login", {
         email: credentials.email,
-        password: credentials.password
-      })
-      
-      // Backend returns: { token, expiration, userId, email, fullName }
-      const { token, userId, email, fullName } = response.data
-      
+        password: credentials.password,
+      });
+
+      const data = response.data;
+      console.log("📡 Raw Login Response:", data);
+
+      // Resilient extraction: check both top-level and nested 'data' object
+      const actualData = data?.data || data;
+
+      // Resilient ID extraction (handles both camelCase and PascalCase)
+      const userId =
+        actualData.userId || actualData.id || actualData.Id || actualData.sub;
+      const fullName =
+        actualData.fullName ||
+        actualData.name ||
+        actualData.FullName ||
+        actualData.Name;
+      const email = actualData.email || actualData.Email;
+      const token =
+        actualData.token ||
+        actualData.Token ||
+        actualData.jwt ||
+        actualData.access_token;
+
+      if (!token) {
+        console.warn("⚠️ No token found in responsive! data:", actualData);
+      }
+
       // Adapt to the format expected by the frontend
       return {
         token,
@@ -29,12 +42,12 @@ export const loginService = {
           id: userId,
           email: email,
           name: fullName,
-          fullName: fullName
-        }
-      }
+          fullName: fullName,
+        },
+      };
     } catch (error) {
-      console.error('Login error:', error)
-      throw error
+      console.error("Login error:", error);
+      throw error;
     }
-  }
-}
+  },
+};

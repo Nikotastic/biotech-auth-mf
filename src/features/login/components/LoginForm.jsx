@@ -239,24 +239,6 @@ export default function LoginForm() {
             </motion.button>
           </form>
 
-          {/* Demo Credentials */}
-          <motion.div
-            className="mt-6 p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-          >
-            <p className="text-xs font-bold text-green-800 mb-1.5">Demo:</p>
-            <div className="space-y-0.5">
-              <p className="text-[11px] sm:text-xs text-green-700">
-                Usuario: user@biotech.com
-              </p>
-              <p className="text-[11px] sm:text-xs text-green-700">
-                Admin: admin@biotech.com
-              </p>
-            </div>
-          </motion.div>
-
           {/* Switch to Register */}
           <motion.div
             className="mt-6 text-center"

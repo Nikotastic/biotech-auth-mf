@@ -65,15 +65,36 @@ export const tokenManager = {
    * @returns {boolean} true si el token ha expirado, false en caso contrario
    */
   isTokenExpired: (token) => {
-    if (!token) return true;
+    if (!token) {
+      console.warn("isTokenExpired: Token is null/undefined");
+      return true;
+    }
 
     const decoded = tokenManager.decodeToken(token);
-    if (!decoded) return true;
-    if (!decoded.exp) return false;
+    if (!decoded) {
+      console.warn("isTokenExpired: Could not decode token");
+      return true;
+    }
 
-    // Comparación rápida: exp * 1000 vs Date.now()
-    // Margen de seguridad de 30 segundos
-    return Date.now() >= decoded.exp * 1000 - 30000;
+    if (!decoded.exp) {
+      console.log("isTokenExpired: No 'exp' claim in token, assuming valid");
+      return false;
+    }
+
+    const currentTime = Date.now();
+    const expirationTime = decoded.exp * 1000;
+    const safetyMargin = 30000; // 30 seconds
+    const isExpired = currentTime >= expirationTime - safetyMargin;
+
+    if (isExpired) {
+      console.warn("isTokenExpired: Token expired!", {
+        currentTime,
+        expirationTime,
+        diffSeconds: (expirationTime - currentTime) / 1000,
+      });
+    }
+
+    return isExpired;
   },
 
   /**
