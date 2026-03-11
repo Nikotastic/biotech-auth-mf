@@ -1,7 +1,7 @@
 import apiService from "@shared-services/ApiService";
 
 export const farmService = {
-  async getUserFarms(token, userIdArg) {
+  async getUserFarms(token, userIdArg, includeInactive = false) {
     let userId = userIdArg;
     // If token is explicitly passed, verify headers, otherwise apiClient handles it
     const config = token
@@ -30,10 +30,21 @@ export const farmService = {
       throw new Error("User ID is required to fetch farms");
     }
 
-    // Backend route: /api/v1/Farms/tenant/{userId}
-    const response = await apiService.get(`/v1/Farms/tenant/${userId}`, config);
-    // Backend returns ApiResponse<FarmListResponse> = { success, data: { farms: [...] }, message }
-    return response.data?.data || response.data;
+    // Official endpoint: /api/v1/farms/tenant/{userId}
+    // Since apiClient already has /api, we just add /v1/farms/tenant/{userId}
+    const finalUrl = `/v1/farms/tenant/${userId}?includeInactive=${includeInactive}`;
+    console.log(`📡 Fetching farms from URL: ${finalUrl}`);
+
+    const response = await apiClient.get(finalUrl, config);
+    const data = response.data;
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.farms)) return data.farms;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.farms)) return data.data.farms;
+    if (Array.isArray(data?.items)) return data.items;
+    
+    return [];
   },
 
   async createFarm(farmData) {

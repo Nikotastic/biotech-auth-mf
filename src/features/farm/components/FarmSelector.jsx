@@ -8,6 +8,9 @@ import {
   TrendingUp,
   Plus,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Search,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@shared/store/authStore";
@@ -53,6 +56,28 @@ export default function FarmSelector() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Search and Pagination states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6; 
+
+  const filteredFarms = farms.filter(
+    (f) =>
+      f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.location.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const totalPages = Math.ceil(filteredFarms.length / itemsPerPage);
+  const paginatedFarms = filteredFarms.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   useEffect(() => {
     const fetchFarms = async () => {
       try {
@@ -61,7 +86,9 @@ export default function FarmSelector() {
           setLoading(false);
           return;
         }
-        const data = await farmService.getUserFarms(token, user?.id);
+        const response = await farmService.getUserFarms(token, user?.id);
+        const rawList = response;
+        console.log("📡 Raw Farms response directly from service:", response);
 
         // Backend returns FarmListResponse = { farms: [...] }
         // Extract the farms array from the response
@@ -266,9 +293,63 @@ export default function FarmSelector() {
                 </motion.div>
               )}
 
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mb-4 flex-shrink-0">
-                <Building2 className="w-6 h-6 text-white" />
+          {/* Search and Action Bar */}
+          <div className="mb-10 max-w-4xl mx-auto flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+            <div className="relative flex-1 group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-green-600 group-focus-within:text-green-700 transition-colors" />
               </div>
+              <input
+                type="text"
+                placeholder="Buscar granja por nombre o ubicación..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-12 pr-4 py-4 border-2 border-green-100 rounded-2xl leading-5 bg-white text-green-950 placeholder-green-600/70 focus:outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 text-base transition-all shadow-sm hover:border-green-200"
+              />
+            </div>
+            
+            <motion.button
+              onClick={handleCreateFarm}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center justify-center gap-2 px-6 py-4 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-bold shadow-md whitespace-nowrap"
+            >
+              <Plus className="w-5 h-5" />
+              Nueva Granja
+            </motion.button>
+          </div>
+
+          {/* Farms Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {paginatedFarms.map((farm, index) => (
+              <motion.button
+                key={farm.id}
+                onClick={() => handleSelect(farm.id)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + index * 0.1 }}
+                whileHover={{ y: -3, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                className={`relative bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-2 transition-all text-left w-full flex flex-row sm:flex-col gap-3 sm:gap-0 items-center sm:items-start ${
+                  selectedFarmLocal === farm.id
+                    ? "border-green-500 ring-4 ring-green-100"
+                    : "border-green-100 hover:border-green-300"
+                }`}
+              >
+                {/* Selected Indicator */}
+                {selectedFarmLocal === farm.id && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
+                  >
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </motion.div>
+                )}
+
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 sm:mb-4">
+                  <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
 
               <h3 className="text-xl font-bold text-green-900 mb-2">
                 {farm.name}
@@ -286,9 +367,35 @@ export default function FarmSelector() {
                   <Users className="w-4 h-4" />
                   <span className="text-sm">{farm.animals || 0} animales</span>
                 </div>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Bottom Actions Area */}
+          <div className="mb-10">
+            {/* Pagination Controls */}
+            {filteredFarms.length > itemsPerPage && (
+              <div className="flex justify-center items-center gap-4">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-xl bg-white shadow-md border border-gray-100 text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-sm font-medium text-green-800 bg-green-50 px-4 py-2 rounded-xl">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-xl bg-white shadow-md border border-gray-100 text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               </div>
-            </motion.button>
-          ))}
+            )}
+          </div>
 
           {/* Create New Farm Card */}
           <motion.button

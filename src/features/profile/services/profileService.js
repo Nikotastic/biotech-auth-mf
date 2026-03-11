@@ -3,24 +3,13 @@ import apiService from "@shared-services/ApiService";
 export const profileService = {
   // GET /api/Auth/profile - Get the authenticated user's profile
   getProfile: async () => {
-    try {
-      const response = await apiService.get("/Auth/profile");
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      throw error;
-    }
+    const response = await apiClient.get("/v1/auth/profile");
+    return response.data;
   },
 
-  // PUT /api/Auth/profile - Update the authenticated user's profile
-  updateProfile: async (profileData) => {
-    try {
-      const response = await apiService.put("/Auth/profile", profileData);
-      return response.data;
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      throw error;
-    }
+  updateProfile: async (userData) => {
+    const response = await apiClient.put("/v1/auth/profile", userData);
+    return response.data;
   },
 };
 
