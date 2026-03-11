@@ -8,6 +8,9 @@ import {
   TrendingUp,
   Plus,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Search,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@shared/store/authStore";
@@ -55,6 +58,28 @@ export default function FarmSelector() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Search and Pagination states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6; 
+
+  const filteredFarms = farms.filter(
+    (f) =>
+      f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.location.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const totalPages = Math.ceil(filteredFarms.length / itemsPerPage);
+  const paginatedFarms = filteredFarms.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   useEffect(() => {
     const fetchFarms = async () => {
       try {
@@ -64,9 +89,8 @@ export default function FarmSelector() {
           return;
         }
         const response = await farmService.getUserFarms(token, user?.id);
-        // Extract the array from the v1 endpoint. Check both data.data and response.data
-        const rawList = response?.data?.data || response?.data || response;
-        console.log("📡 Raw Farms response:", { response, rawList });
+        const rawList = response;
+        console.log("📡 Raw Farms response directly from service:", response);
 
         const farmList = (Array.isArray(rawList) ? rawList : []).map((f) =>
           normalizeFarm(f),
@@ -248,9 +272,35 @@ export default function FarmSelector() {
             </motion.p>
           </div>
 
+          {/* Search and Action Bar */}
+          <div className="mb-10 max-w-4xl mx-auto flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+            <div className="relative flex-1 group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-green-600 group-focus-within:text-green-700 transition-colors" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar granja por nombre o ubicación..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-12 pr-4 py-4 border-2 border-green-100 rounded-2xl leading-5 bg-white text-green-950 placeholder-green-600/70 focus:outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 text-base transition-all shadow-sm hover:border-green-200"
+              />
+            </div>
+            
+            <motion.button
+              onClick={handleCreateFarm}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center justify-center gap-2 px-6 py-4 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-bold shadow-md whitespace-nowrap"
+            >
+              <Plus className="w-5 h-5" />
+              Nueva Granja
+            </motion.button>
+          </div>
+
           {/* Farms Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            {farms.map((farm, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {paginatedFarms.map((farm, index) => (
               <motion.button
                 key={farm.id}
                 onClick={() => handleSelect(farm.id)}
@@ -304,29 +354,32 @@ export default function FarmSelector() {
                 </div>
               </motion.button>
             ))}
+          </div>
 
-            {/* Create New Farm Card */}
-            <motion.button
-              onClick={handleCreateFarm}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + farms.length * 0.1 }}
-              whileHover={{ y: -3, scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-white/50 border-2 border-dashed border-green-300 rounded-2xl p-4 sm:p-6 flex sm:flex-col flex-row items-center gap-3 sm:gap-0 justify-start sm:justify-center text-left sm:text-center hover:bg-green-50/50 hover:border-green-500 transition-all min-h-[70px] sm:min-h-[180px]"
-            >
-              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 sm:mb-3">
-                <Plus className="w-5 h-5 sm:w-7 sm:h-7 text-green-600" />
+          {/* Bottom Actions Area */}
+          <div className="mb-10">
+            {/* Pagination Controls */}
+            {filteredFarms.length > itemsPerPage && (
+              <div className="flex justify-center items-center gap-4">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-xl bg-white shadow-md border border-gray-100 text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-sm font-medium text-green-800 bg-green-50 px-4 py-2 rounded-xl">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-xl bg-white shadow-md border border-gray-100 text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-green-800 mb-0 sm:mb-1">
-                  Registrar Nueva Granja
-                </h3>
-                <p className="text-xs sm:text-sm text-green-600">
-                  Añade una nueva ubicación
-                </p>
-              </div>
-            </motion.button>
+            )}
           </div>
 
           {/* Continue Button (Only visible if there are farms to select) */}
