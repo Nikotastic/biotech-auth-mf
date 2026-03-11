@@ -5,7 +5,7 @@ export const loginService = {
     // Use real API
     try {
       // Call the backend with the expected format: { email, password }
-      const response = await apiClient.post("/Auth/login", {
+      const response = await apiClient.post("/v1/auth/login", {
         email: credentials.email,
         password: credentials.password,
       });

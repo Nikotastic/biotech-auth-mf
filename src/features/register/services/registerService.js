@@ -3,7 +3,7 @@ import apiClient from "@shared/utils/apiClient";
 export const registerService = async (userData) => {
   try {
     // Call the backend with the expected format: { fullName, email, password }
-    const response = await apiClient.post("/Auth/register", {
+    const response = await apiClient.post("/v1/auth/register", {
       fullName: userData.name || userData.fullName,
       email: userData.email,
       password: userData.password,
@@ -13,7 +13,7 @@ export const registerService = async (userData) => {
     const userId = response.data.id || response.data;
 
     // Auto-login after registration
-    const loginResponse = await apiClient.post("/Auth/login", {
+    const loginResponse = await apiClient.post("/v1/auth/login", {
       email: userData.email,
       password: userData.password,
     });

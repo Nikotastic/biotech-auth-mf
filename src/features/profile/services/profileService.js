@@ -2,12 +2,12 @@ import apiClient from "@shared/utils/apiClient";
 
 export const profileService = {
   getProfile: async () => {
-    const response = await apiClient.get("/auth/profile");
+    const response = await apiClient.get("/v1/auth/profile");
     return response.data;
   },
 
   updateProfile: async (userData) => {
-    const response = await apiClient.put("/auth/profile", userData);
+    const response = await apiClient.put("/v1/auth/profile", userData);
     return response.data;
   },
 };
