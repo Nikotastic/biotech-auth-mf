@@ -14,17 +14,20 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@shared/store/authStore";
-import { useToastStore } from "@shared/store/toastStore";
+import alertService from "@shared/utils/alertService";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, selectedFarm, logout } = useAuthStore();
-  const addToast = useToastStore((state) => state.addToast);
 
   const handleLogout = () => {
-    logout();
-    // The store now handles the event dispatch
-    window.location.href = "/";
+    alertService.success("¡Hasta pronto!", "Sesión Cerrada");
+    setTimeout(() => {
+      logout();
+      // Notify authentication change to sync
+      window.dispatchEvent(new Event("auth-change"));
+      window.location.href = "/";
+    }, 500);
   };
 
   const modules = [

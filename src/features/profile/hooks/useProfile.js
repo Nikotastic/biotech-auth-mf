@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@shared/store/authStore";
-import { profileService } from "../services/profileService";
+import apiService from "@shared-services/ApiService";
 
 export const useProfile = () => {
   const { user, token, logout } = useAuthStore();
@@ -11,9 +11,9 @@ export const useProfile = () => {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const data = await profileService.getProfile();
-      setProfileData(data);
-      return data;
+      const response = await apiService.get("/auth/profile");
+      setProfileData(response.data);
+      return response.data;
     } catch (err) {
       console.error("Error fetching profile", err);
     } finally {
@@ -23,8 +23,8 @@ export const useProfile = () => {
 
   useEffect(() => {
     if (token) {
-      if (user) setProfileData(user); // Optimistic
-      fetchProfile();
+      if (user) setProfileData(user);
+      // fetchProfile(); // Evitar sobrescritura con datos vacíos del backend
     }
   }, [token]);
 
@@ -33,9 +33,21 @@ export const useProfile = () => {
     setError(null);
 
     try {
-      const result = await profileService.updateProfile(data);
-      setProfileData((prev) => ({ ...prev, ...data }));
-      return result;
+      // Corrected endpoint path to match ProfileController: api/auth/profile
+      const response = await apiService.put("/auth/profile", data);
+
+      const updatedData = {
+        ...profileData,
+        ...data,
+        name: data.fullName || data.name || profileData.name,
+      };
+      setProfileData(updatedData);
+
+      // Actualizar el store global para persistencia (localStorage)
+      const { setAuth } = useAuthStore.getState();
+      setAuth(updatedData, token);
+
+      return response.data;
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || "Error al actualizar perfil";

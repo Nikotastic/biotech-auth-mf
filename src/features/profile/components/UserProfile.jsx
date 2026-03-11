@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   User,
@@ -6,22 +6,45 @@ import {
   Shield,
   Calendar,
   LogOut,
+  Settings,
+  Building2,
+  Edit2,
   Lock,
+  ArrowLeft,
+  RefreshCw,
   MapPin,
   ChevronRight,
-  ArrowLeft,
-  Building2,
-  RefreshCw,
   Hash,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useProfile } from "../hooks/useProfile";
 import { useAuthStore } from "@shared/store/authStore";
-import { useToastStore } from "@shared/store/toastStore";
+import alertService from "@shared/utils/alertService";
+import { AnimatePresence } from "framer-motion";
+import EditProfileModal from "./EditProfileModal";
 
 export default function UserProfile() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, selectedFarm, logout } = useAuthStore();
-  const addToast = useToastStore((state) => state.addToast);
+  const { profile, logout, isAuthenticated, updateProfile } = useProfile();
+  const { selectedFarm } = useAuthStore();
+
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleUpdateProfile = async (data) => {
+    try {
+      await updateProfile(data);
+      alertService.success(
+        "Tu perfil se ha actualizado correctamente",
+        "¡Éxito!",
+      );
+      setShowEditModal(false);
+    } catch (error) {
+      alertService.error(
+        "Ocurrió un problema al actualizar. Inténtalo de nuevo.",
+        "Error",
+      );
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -30,32 +53,19 @@ export default function UserProfile() {
   }, [isAuthenticated, navigate]);
 
   const handleLogout = () => {
-    addToast("👋 Cerrando sesión...", "info");
+    alertService.info("Cerrando sesión...", "¡Nos vemos pronto!");
     setTimeout(() => {
       logout();
-      navigate("/login");
     }, 500);
+  };
+
+  const handleBackToDashboard = () => {
+    navigate("/dashboard");
   };
 
   const handleChangeFarm = () => {
     navigate("/farm-selector");
   };
-
-  /* Usar datos del store directamente */
-  const profile = user
-    ? {
-        name:
-          user.name ||
-          user.fullName ||
-          user.username ||
-          user.email?.split("@")[0] ||
-          "Usuario",
-        email: user.email || "",
-        role: user.role || user.roles?.[0] || "Operador",
-        id: user.id || user.userId || user.sub || null,
-        createdAt: user.createdAt || user.created_at || null,
-      }
-    : null;
 
   if (!profile) {
     return (
@@ -156,19 +166,23 @@ export default function UserProfile() {
                     {userInitial}
                   </span>
                 </div>
-                <div className="flex-1 sm:flex-none">
-                  <h2 className="text-base sm:text-xl font-bold text-gray-800 mb-0.5 sm:mb-1">
-                    {profile.name}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-4 break-all">
-                    {profile.email}
-                  </p>
-                  <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs sm:text-sm font-semibold">
-                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    {profile.role}
+                <h2 className="text-xl font-bold text-gray-800 mb-1">
+                  {profile.name || "Usuario"}
+                </h2>
+                <p className="text-sm text-gray-500 mb-4">{profile.email}</p>
+              </div>
+
+              {selectedFarm && (
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <p className="text-sm text-gray-500 mb-2">Granja Actual</p>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-green-600" />
+                    <p className="text-sm font-medium text-gray-800">
+                      {selectedFarm.name}
+                    </p>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Granja activa */}
@@ -230,37 +244,40 @@ export default function UserProfile() {
             transition={{ delay: 0.1 }}
             className="md:col-span-2 space-y-4 sm:space-y-6"
           >
-            {/* Información Personal */}
-            <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-2 border-green-100">
-              <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4">
-                Información Personal
-              </h3>
-              <div className="space-y-2 sm:space-y-3">
-                {infoItems.map((item, i) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 p-2.5 sm:p-3 bg-gray-50 rounded-xl"
-                    >
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                        <Icon className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wide">
-                          {item.label}
-                        </p>
-                        <p
-                          className={`text-sm sm:text-base font-medium text-gray-800 truncate ${
-                            item.mono ? "font-mono text-xs" : ""
-                          }`}
-                        >
-                          {item.value}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* Personal Info */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-green-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-800">
+                  Información Personal
+                </h3>
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="p-2 hover:bg-green-50 rounded-lg transition-colors"
+                >
+                  <Edit2 className="w-5 h-5 text-green-600" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <User className="w-5 h-5 text-green-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500">Nombre completo</p>
+                    <p className="text-base font-medium text-gray-800">
+                      {profile.name || "No especificado"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Mail className="w-5 h-5 text-green-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500">Correo electrónico</p>
+                    <p className="text-base font-medium text-gray-800">
+                      {profile.email}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -274,19 +291,19 @@ export default function UserProfile() {
               </div>
               <div className="space-y-3">
                 <button
-                  onClick={() => navigate("/forgot-password")}
-                  className="w-full flex items-center justify-between p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors group border border-green-200"
+                  onClick={() => navigate("/reset-password")}
+                  className="w-full flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
                 >
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                       <Lock className="w-4 h-4 text-green-600" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm sm:text-base font-medium text-gray-800">
+                      <p className="font-medium text-gray-800">
                         Cambiar Contraseña
                       </p>
-                      <p className="text-xs sm:text-sm text-gray-500">
-                        Actualiza tu contraseña de acceso
+                      <p className="text-sm text-gray-500">
+                        Actualiza tu contraseña
                       </p>
                     </div>
                   </div>
@@ -301,7 +318,7 @@ export default function UserProfile() {
                 <Shield className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                 Seguridad de tu cuenta
               </h3>
-              <p className="text-green-800 text-xs sm:text-sm">
+              <p className="text-green-800 text-sm">
                 Tu información está protegida. Recuerda no compartir tu
                 contraseña con nadie y cerrar sesión cuando uses dispositivos
                 compartidos.
@@ -310,6 +327,16 @@ export default function UserProfile() {
           </motion.div>
         </div>
       </div>
+      <AnimatePresence>
+        {showEditModal && (
+          <EditProfileModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            user={profile}
+            onUpdate={handleUpdateProfile}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

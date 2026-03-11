@@ -10,6 +10,18 @@ export default defineConfig({
       "@components": path.resolve(__dirname, "./src/components"),
       "@features": path.resolve(__dirname, "./src/features"),
       "@shared": path.resolve(__dirname, "./src/shared"),
+      // Alias to access shared services from Shell
+      "@shared-services": path.resolve(
+        __dirname,
+        "../biotech-shell/src/shared/services"
+      ),
+    },
+  },
+  server: {
+    port: 5001,
+    cors: true,
+    fs: {
+      allow: [".."], // Allow accessing files in the parent directory
     },
   },
   plugins: [
@@ -28,8 +40,6 @@ export default defineConfig({
           "./src/features/password/components/ResetPasswordForm.jsx",
         "./SettingsPage": "./src/features/profile/components/SettingsPage.jsx",
         "./AuthStore": "./src/shared/store/authStore.js",
-        "./ToastContainer": "./src/shared/components/ui/ToastContainer.jsx",
-        "./ToastStore": "./src/shared/store/toastStore.js",
       },
       shared: {
         react: { singleton: true },
@@ -46,9 +56,8 @@ export default defineConfig({
     target: "esnext",
     minify: false,
     cssCodeSplit: false,
-  },
-  server: {
-    port: 5001,
-    cors: true,
+    rollupOptions: {
+      external: ["@shared-services/ApiService"], // Evitar empaquetar en build de federación si fuera necesario, pero aquí lo queremos incluir
+    },
   },
 });
