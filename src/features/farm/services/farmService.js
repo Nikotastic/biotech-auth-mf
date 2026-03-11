@@ -1,7 +1,7 @@
 import apiClient from "@shared/utils/apiClient";
 
 export const farmService = {
-  async getUserFarms(token, userIdArg) {
+  async getUserFarms(token, userIdArg, includeInactive = false) {
     let userId = userIdArg;
     // If token is explicitly passed, verify headers, otherwise apiClient handles it
     const config = token
@@ -30,13 +30,21 @@ export const farmService = {
       throw new Error("User ID is required to fetch farms");
     }
 
-    // Official endpoint from your image: /api/v1/Farms/tenant/{userId}
-    // Since apiClient already has /api, we just add /v1/Farms/tenant/{userId}
-    const finalUrl = `/v1/Farms/tenant/${userId}`;
+    // Official endpoint: /api/v1/farms/tenant/{userId}
+    // Since apiClient already has /api, we just add /v1/farms/tenant/{userId}
+    const finalUrl = `/v1/farms/tenant/${userId}?includeInactive=${includeInactive}`;
     console.log(`📡 Fetching farms from URL: ${finalUrl}`);
 
     const response = await apiClient.get(finalUrl, config);
-    return response.data;
+    const data = response.data;
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.farms)) return data.farms;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.farms)) return data.data.farms;
+    if (Array.isArray(data?.items)) return data.items;
+    
+    return [];
   },
 
   async getFarmById(id) {
