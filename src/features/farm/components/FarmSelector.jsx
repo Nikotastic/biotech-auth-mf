@@ -72,6 +72,15 @@ export default function FarmSelector() {
 
   useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
+  // Fix: clamp currentPage when farms are deleted and totalPages shrinks
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages]);
+
   // ── Fetch farms on mount ───────────────────────────────────────────────────
   useEffect(() => {
     const fetchFarms = async () => {
