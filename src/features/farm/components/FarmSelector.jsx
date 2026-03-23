@@ -19,6 +19,7 @@ import { ToastContainer } from "@shared/components/ui/ToastContainer";
 import { farmService } from "../services/farmService";
 import { CreateFarmModal } from "./CreateFarmModal";
 import { EditFarmModal } from "./EditFarmModal";
+import apiClient from "@shared/utils/apiClient";
 
 // Helper: normalize farm object from any backend shape
 const normalizeFarm = (f, fallback = {}) => {
@@ -87,7 +88,24 @@ export default function FarmSelector() {
       try {
         if (!token) { setLoading(false); return; }
         const response = await farmService.getUserFarms(token, user?.id);
-        const farmList = (Array.isArray(response) ? response : []).map((f) => normalizeFarm(f));
+        const baseFarmList = (Array.isArray(response) ? response : []).map((f) => normalizeFarm(f));
+        
+        // Dynamically fetch animal counts from HerdService
+        const farmList = await Promise.all(
+          baseFarmList.map(async (farm) => {
+            try {
+              const res = await apiClient.get(`/v1/animals?farmId=${farm.id}`, {
+                headers: { "X-Farm-Id": String(farm.id) }
+              });
+              const animalList = res.data?.data || res.data || [];
+              return { ...farm, animals: animalList.length };
+            } catch (err) {
+              console.warn(`Could not fetch animals for farm ${farm.id}:`, err);
+              return farm; // keep fallback
+            }
+          })
+        );
+
         setFarms(farmList);
 
         if (farmList.length === 1 && !selectedFarmLocal) {

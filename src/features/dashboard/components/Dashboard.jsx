@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   Home,
   Users,
@@ -15,11 +16,28 @@ import {
 import { motion } from "framer-motion";
 import { useAuthStore } from "@shared/store/authStore";
 import { useToastStore } from "@shared/store/toastStore";
+import apiClient from "@shared/utils/apiClient";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, selectedFarm, logout } = useAuthStore();
   const addToast = useToastStore((state) => state.addToast);
+  const [animalCount, setAnimalCount] = useState(0);
+
+  useEffect(() => {
+    if (selectedFarm?.id) {
+      const fetchAnimals = async () => {
+        try {
+          const res = await apiClient.get(`/v1/animals?farmId=${selectedFarm.id}`);
+          const list = res.data?.data || res.data || [];
+          setAnimalCount(list.length);
+        } catch (err) {
+          console.error("Error fetching animal count in dashboard:", err);
+        }
+      };
+      fetchAnimals();
+    }
+  }, [selectedFarm?.id]);
 
   const handleLogout = () => {
     logout();
@@ -75,7 +93,7 @@ export default function Dashboard() {
   const stats = [
     {
       label: "Total Animales",
-      value: selectedFarm?.animalCount || "0",
+      value: animalCount.toString(),
       trend: "+5%",
       icon: Home,
     },
