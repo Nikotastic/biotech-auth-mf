@@ -10,19 +10,12 @@ export default defineConfig({
       "@components": path.resolve(__dirname, "./src/components"),
       "@features": path.resolve(__dirname, "./src/features"),
       "@shared": path.resolve(__dirname, "./src/shared"),
-      // Alias to access shared services from Shell
-      "@shared-services": path.resolve(
-        __dirname,
-        "../biotech-shell/src/shared/services"
-      ),
+      // Eliminamos @shared-services porque causa errores de resolución en producción
     },
   },
   server: {
     port: 5001,
     cors: true,
-    fs: {
-      allow: [".."], // Allow accessing files in the parent directory
-    },
   },
   plugins: [
     react(),
@@ -54,10 +47,10 @@ export default defineConfig({
   ],
   build: {
     target: "esnext",
-    minify: false,
+    minify: true, // Minificar para producción
     cssCodeSplit: false,
     rollupOptions: {
-      external: ["@shared-services/ApiService"], // Evitar empaquetar en build de federación si fuera necesario, pero aquí lo queremos incluir
+      // Eliminamos el external que causaba el Uncaught TypeError
     },
   },
 });

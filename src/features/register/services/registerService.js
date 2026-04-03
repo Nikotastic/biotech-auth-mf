@@ -1,4 +1,4 @@
-import apiService from "@shared-services/ApiService";
+import apiClient from "@shared/utils/apiClient";
 
 export const registerService = async (userData) => {
   try {

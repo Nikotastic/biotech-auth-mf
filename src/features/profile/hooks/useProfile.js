@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@shared/store/authStore";
-import apiService from "@shared-services/ApiService";
+import apiClient from "@shared/utils/apiClient";
 
 export const useProfile = () => {
   const { user, token, logout } = useAuthStore();

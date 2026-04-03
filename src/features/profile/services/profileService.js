@@ -1,4 +1,4 @@
-import apiService from "@shared-services/ApiService";
+import apiClient from "@shared/utils/apiClient";
 
 export const profileService = {
   // GET /api/Auth/profile - Get the authenticated user's profile
