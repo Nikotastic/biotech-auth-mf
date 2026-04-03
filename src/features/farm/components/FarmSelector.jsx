@@ -5,24 +5,24 @@ import {
   Check,
   MapPin,
   Users,
-  TrendingUp,
   Plus,
   Loader2,
   ChevronLeft,
   ChevronRight,
   Search,
+  Pencil,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@shared/store/authStore";
 import alertService from "@shared/utils/alertService";
 import { farmService } from "../services/farmService";
-import { profileService } from "@features/profile/services/profileService";
 import { CreateFarmModal } from "./CreateFarmModal";
+import { EditFarmModal } from "./EditFarmModal";
+import apiClient from "@shared/utils/apiClient";
 
-// Helper function to normalize farm object (handles nested .data and case variations)
+// Helper: normalize farm object from any backend shape
 const normalizeFarm = (f, fallback = {}) => {
   const raw = f?.data || f || {};
-  // Extract nested data if backend wraps it
   const d = raw.data && typeof raw.data === "object" ? raw.data : raw;
 
   return {
@@ -37,185 +37,177 @@ const normalizeFarm = (f, fallback = {}) => {
     animals: d.animals || d.animalCount || 0,
     size: d.size || 0,
     description: d.description || "",
+    owner: d.owner || d.Owner || "",
   };
 };
 
 export default function FarmSelector() {
   const navigate = useNavigate();
-  const {
-    token,
-    user,
-    setSelectedFarm,
-    selectedFarm: storedSelectedFarm,
-  } = useAuthStore();
+  const { token, user, setSelectedFarm, selectedFarm: storedSelectedFarm } = useAuthStore();
+  const addToast = useToastStore((state) => state.addToast);
 
   const [farms, setFarms] = useState([]);
-  const [selectedFarmLocal, setSelectedFarmLocal] = useState(
-    storedSelectedFarm?.id || null,
-  );
+  const [selectedFarmLocal, setSelectedFarmLocal] = useState(storedSelectedFarm?.id || null);
   const [loading, setLoading] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Search and Pagination states
+  // Modals
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingFarm, setEditingFarm] = useState(null); // farm object being edited
+
+  // Search & Pagination
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; 
+  const itemsPerPage = 6;
 
   const filteredFarms = farms.filter(
     (f) =>
       f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       f.location.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
   const totalPages = Math.ceil(filteredFarms.length / itemsPerPage);
   const paginatedFarms = filteredFarms.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
 
-  // Reset page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
+  // Fix: clamp currentPage when farms are deleted and totalPages shrinks
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages]);
+
+  // ── Fetch farms on mount ───────────────────────────────────────────────────
   useEffect(() => {
     const fetchFarms = async () => {
       try {
-        if (!token) {
-          // If no token, probably needs login, but let's handle graceful degradation or mock
-          setLoading(false);
-          return;
-        }
+        if (!token) { setLoading(false); return; }
         const response = await farmService.getUserFarms(token, user?.id);
-        const rawList = response;
-        console.log("📡 Raw Farms response directly from service:", response);
+        const baseFarmList = (Array.isArray(response) ? response : []).map((f) => normalizeFarm(f));
+        
+        // Dynamically fetch animal counts from HerdService
+        const farmList = await Promise.all(
+          baseFarmList.map(async (farm) => {
+            try {
+              const res = await apiClient.get(`/v1/animals?farmId=${farm.id}`, {
+                headers: { "X-Farm-Id": String(farm.id) }
+              });
+              const animalList = res.data?.data || res.data || [];
+              return { ...farm, animals: animalList.length };
+            } catch (err) {
+              console.warn(`Could not fetch animals for farm ${farm.id}:`, err);
+              return farm; // keep fallback
+            }
+          })
+        );
 
-        // Backend returns FarmListResponse = { farms: [...] }
-        // Extract the farms array from the response
-        let farmList = Array.isArray(data) ? data : data?.farms || [];
-
-        // Inject Demo Farm if empty (Requested by User for testing)
-        if (farmList.length === 0) {
-          farmList = [
-            {
-              id: "demo-farm-id",
-              name: "Granja de Prueba 🚀",
-              location: "Virtual",
-              size: "N/A",
-              animals: 0,
-              productivity: "100%",
-            },
-          ];
-          alertService.info(
-            "Se ha generado una granja temporal para pruebas.",
-            "Modo Prueba"
-          );
-        }
-
-        console.log("✅ Final Farm List:", farmList);
         setFarms(farmList);
 
-        // If there's only one farm, select it by default
         if (farmList.length === 1 && !selectedFarmLocal) {
-          console.log("🔄 Auto-selecting single farm:", farmList[0].id);
           setSelectedFarmLocal(farmList[0].id);
         }
       } catch (error) {
         console.error("Error fetching farms:", error);
-        // Fallback to Demo Farm on error (for testing purposes as requested)
-        setFarms([
-          {
-            id: "demo-farm-id",
-            name: "Granja de Prueba 🚀",
-            location: "Virtual",
-            size: "N/A",
-            animals: 0,
-            productivity: "100%",
-          },
-        ]);
-        alertService.warning(
-          "Granja demo activada por error de conexión.",
-          "Modo Prueba"
-        );
+        setFarms([]);
+        addToast("Error al cargar tus granjas. Por favor verifica tu conexión.", "error");
       } finally {
         setLoading(false);
       }
     };
-
     fetchFarms();
   }, [token, user?.id]);
 
-  console.log("🎨 Rendering FarmSelector:", {
-    farmsCount: farms.length,
-    selectedId: selectedFarmLocal,
-    buttonActive: !!selectedFarmLocal,
-  });
-
-  const handleSelect = (farmId) => {
-    setSelectedFarmLocal(farmId);
-  };
+  // ── Select farm & navigate ─────────────────────────────────────────────────
+  const handleSelect = (farmId) => setSelectedFarmLocal(farmId);
 
   const onSelectFarm = async (farmId) => {
-    if (!farmId) {
-      alertService.warning(
-        "Por favor selecciona una granja",
-        "Selección Requerida"
-      );
-      return;
-    }
+    if (!farmId) { addToast("⚠️ Por favor selecciona una granja", "warning"); return; }
     const farm = farms.find((f) => f.id === farmId);
     if (farm) {
-      // 1. Guardar en el Store local
       setSelectedFarm(farm);
-      alertService.success(
-        `Granja "${farm.name}" seleccionada correctamente`,
-        "Éxito"
-      );
-      // Navegación inmediata tras selección
+      addToast(`✅ Granja "${farm.name}" seleccionada correctamente`, "success");
       navigate("/dashboard");
     } else {
       alertService.error("Error al seleccionar la granja", "Error");
     }
   };
 
-  const handleCreateFarm = () => {
-    setIsCreateModalOpen(true);
-  };
-
+  // ── CREATE farm ────────────────────────────────────────────────────────────
   const handleCreateFarmSubmit = async (farmData) => {
     try {
-      const newFarm = await farmService.createFarm(farmData);
-      alertService.success(
-        `Granja "${farmData.name}" creada exitosamente`,
-        "Éxito"
-      );
-      // Add new farm to list
-      setFarms((prev) => [...prev, newFarm]);
-      // Auto-select the new farm
-      setSelectedFarmLocal(newFarm.id);
+      const payload = {
+        name: farmData.name,
+        owner: farmData.owner || user?.fullName || user?.name || "",
+        address: farmData.location,
+        geographicLocation: farmData.location,
+        size: parseFloat(farmData.size) || 0,
+        description: farmData.description || "",
+      };
+
+      const response = await farmService.createFarm(payload);
+      const normalizedNewFarm = normalizeFarm(response, farmData);
+
+      addToast(`✅ Granja "${normalizedNewFarm.name}" creada exitosamente`, "success");
+      setFarms((prev) => [...prev, normalizedNewFarm]);
+      setSelectedFarmLocal(normalizedNewFarm.id);
     } catch (error) {
       console.error("Error creating farm:", error);
-
-      // Check if it's a 404 (endpoint doesn't exist)
       if (error.response?.status === 404) {
-        alertService.warning(
-          "Funcionalidad en mantenimiento. Pronto podrás crear granjas desde aquí.",
-          "En Mantenimiento"
-        );
-      } else if (error.response?.status === 500) {
-        alertService.error(
-          "Error del servidor. Por favor intenta más tarde.",
-          "Error del Servidor"
-        );
+        addToast("🚧 Funcionalidad en construcción. El backend aún no está listo.", "warning");
       } else {
-        alertService.error(
-          "Error al crear la granja. Verifica tu conexión e intenta nuevamente.",
-          "Error"
-        );
+        addToast("❌ Error al crear la granja. Verifica tu conexión e intenta nuevamente.", "error");
       }
-      throw error; // Re-throw to let modal handle it
+      throw error;
     }
   };
+
+  // ── UPDATE farm ────────────────────────────────────────────────────────────
+  const handleUpdateFarm = async (farmId, farmData) => {
+    try {
+      const response = await farmService.updateFarm(farmId, farmData);
+      const updated = normalizeFarm(response, farmData);
+
+      setFarms((prev) => prev.map((f) => (f.id === farmId ? { ...f, ...updated } : f)));
+      addToast(`✅ Granja "${updated.name}" actualizada correctamente`, "success");
+    } catch (error) {
+      console.error("Error updating farm:", error);
+      if (error.response?.status === 404) {
+        addToast("🚧 El endpoint de actualización aún no está implementado en el backend.", "warning");
+      } else {
+        addToast("❌ Error al actualizar la granja.", "error");
+      }
+      throw error;
+    }
+  };
+
+  // ── DELETE farm ────────────────────────────────────────────────────────────
+  const handleDeleteFarm = async (farmId) => {
+    try {
+      await farmService.deleteFarm(farmId);
+
+      const deleted = farms.find((f) => f.id === farmId);
+      setFarms((prev) => prev.filter((f) => f.id !== farmId));
+
+      // If the deleted farm was selected, clear selection
+      if (selectedFarmLocal === farmId) setSelectedFarmLocal(null);
+
+      addToast(`🗑️ Granja "${deleted?.name}" eliminada correctamente`, "success");
+    } catch (error) {
+      console.error("Error deleting farm:", error);
+      if (error.response?.status === 404) {
+        addToast("🚧 El endpoint de eliminación aún no está implementado en el backend.", "warning");
+      } else {
+        addToast("❌ Error al eliminar la granja.", "error");
+      }
+      throw error;
+    }
+  };
+
+  // ────────────────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -273,14 +265,16 @@ export default function FarmSelector() {
               onClick={() => handleSelect(farm.id)}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={`relative bg-white rounded-2xl shadow-lg p-6 border-2 transition-all text-left h-full flex flex-col ${
-                selectedFarmLocal === farm.id
-                  ? "border-green-500 ring-4 ring-green-100"
-                  : "border-green-100 hover:border-green-300"
-              }`}
+              transition={{ delay: 0.3 }}
+              className="text-2xl sm:text-3xl font-bold text-green-900 mb-2"
+            >
+              {farms.length > 0 ? "Selecciona tu Granja" : "Comenzar con BioTech Farm"}
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-sm sm:text-base text-green-600 px-4"
             >
               {/* Selected Indicator */}
               {selectedFarmLocal === farm.id && (
@@ -301,15 +295,17 @@ export default function FarmSelector() {
               </div>
               <input
                 type="text"
+                id="farm-search"
                 placeholder="Buscar granja por nombre o ubicación..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full pl-12 pr-4 py-4 border-2 border-green-100 rounded-2xl leading-5 bg-white text-green-950 placeholder-green-600/70 focus:outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 text-base transition-all shadow-sm hover:border-green-200"
               />
             </div>
-            
+
             <motion.button
-              onClick={handleCreateFarm}
+              id="btn-create-farm"
+              onClick={() => setIsCreateModalOpen(true)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="flex items-center justify-center gap-2 px-6 py-4 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-bold shadow-md whitespace-nowrap"
@@ -322,140 +318,142 @@ export default function FarmSelector() {
           {/* Farms Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {paginatedFarms.map((farm, index) => (
-              <motion.button
+              <motion.div
                 key={farm.id}
-                onClick={() => handleSelect(farm.id)}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + index * 0.1 }}
-                whileHover={{ y: -3, scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                className={`relative bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-2 transition-all text-left w-full flex flex-row sm:flex-col gap-3 sm:gap-0 items-center sm:items-start ${
+                className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all ${
                   selectedFarmLocal === farm.id
                     ? "border-green-500 ring-4 ring-green-100"
                     : "border-green-100 hover:border-green-300"
                 }`}
               >
-                {/* Selected Indicator */}
+                {/* Selected badge */}
                 {selectedFarmLocal === farm.id && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
+                    className="absolute -top-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg z-10"
                   >
                     <Check className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </motion.div>
                 )}
 
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 sm:mb-4">
-                  <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
+                {/* Edit button */}
+                <button
+                  id={`btn-edit-farm-${farm.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingFarm(farm);
+                  }}
+                  className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-white border border-gray-200 hover:bg-blue-50 hover:border-blue-400 text-gray-400 hover:text-blue-600 rounded-lg transition-all shadow-sm z-10"
+                  title="Editar granja"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
 
-              <h3 className="text-xl font-bold text-green-900 mb-2">
-                {farm.name}
-              </h3>
-
-              <div className="space-y-2 mt-auto">
-                {farm.location && (
-                  <div className="flex items-center gap-2 text-green-600">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">{farm.location}</span>
+                {/* Clickable selection area */}
+                <button
+                  className="w-full text-left p-4 sm:p-6 flex flex-row sm:flex-col gap-3 sm:gap-0 items-center sm:items-start"
+                  onClick={() => handleSelect(farm.id)}
+                >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 sm:mb-4">
+                    <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                )}
-                {/* Mock data fields if real API doesn't return them yet, handle gracefully */}
-                <div className="flex items-center gap-2 text-green-600">
-                  <Users className="w-4 h-4" />
-                  <span className="text-sm">{farm.animals || 0} animales</span>
-                </div>
-              </motion.button>
+
+                  <div className="flex-1 pr-8 sm:pr-0">
+                    <h3 className="text-base sm:text-xl font-bold text-green-900 mb-1 sm:mb-2">
+                      {farm.name}
+                    </h3>
+                    <div className="flex flex-row sm:flex-col gap-2">
+                      {farm.location && (
+                        <div className="flex items-center gap-1.5 text-green-600">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" />
+                          <span className="text-xs sm:text-sm truncate">{farm.location}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 text-green-600">
+                        <Users className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-xs sm:text-sm">{farm.animals || 0} animales</span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              </motion.div>
             ))}
           </div>
 
-          {/* Bottom Actions Area */}
-          <div className="mb-10">
-            {/* Pagination Controls */}
-            {filteredFarms.length > itemsPerPage && (
-              <div className="flex justify-center items-center gap-4">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-xl bg-white shadow-md border border-gray-100 text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="text-sm font-medium text-green-800 bg-green-50 px-4 py-2 rounded-xl">
-                  Página {currentPage} de {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-xl bg-white shadow-md border border-gray-100 text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Create New Farm Card */}
-          <motion.button
-            onClick={handleCreateFarm}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 + farms.length * 0.1 }}
-            whileHover={{ y: -5, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="relative bg-white/50 border-2 border-dashed border-green-300 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:bg-green-50/50 hover:border-green-500 transition-all min-h-[200px]"
-          >
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Plus className="w-8 h-8 text-green-600" />
+          {/* Pagination */}
+          {filteredFarms.length > itemsPerPage && (
+            <div className="flex justify-center items-center gap-4 mb-10">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-xl bg-white shadow-md border border-gray-100 text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="text-sm font-medium text-green-800 bg-green-50 px-4 py-2 rounded-xl">
+                Página {currentPage} de {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-xl bg-white shadow-md border border-gray-100 text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
-            <h3 className="text-lg font-bold text-green-800 mb-1">
-              Registrar Nueva Granja
-            </h3>
-            <p className="text-sm text-green-600">
-              Añade una nueva ubicación a tu cuenta
-            </p>
-          </motion.button>
-        </div>
+          )}
 
-        {/* Continue Button (Only visible if there are farms to select) */}
-        {farms.length > 0 && (
-          <motion.button
-            onClick={() => onSelectFarm(selectedFarmLocal)}
-            disabled={!selectedFarmLocal}
-            whileHover={{ scale: selectedFarmLocal ? 1.02 : 1 }}
-            whileTap={{ scale: selectedFarmLocal ? 0.98 : 1 }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className={`w-full py-4 rounded-xl shadow-lg transition-all font-bold text-lg ${
-              selectedFarmLocal
-                ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+          {/* Continue button */}
+          {farms.length > 0 && (
+            <motion.button
+              id="btn-continue-to-dashboard"
+              onClick={() => onSelectFarm(selectedFarmLocal)}
+              disabled={!selectedFarmLocal}
+              whileHover={{ scale: selectedFarmLocal ? 1.01 : 1 }}
+              whileTap={{ scale: selectedFarmLocal ? 0.99 : 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className={`w-full py-3 sm:py-4 rounded-xl shadow-lg transition-all font-bold text-base sm:text-lg ${
+                selectedFarmLocal
+                  ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white cursor-pointer"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Continuar al Dashboard
+            </motion.button>
+          )}
+
+          {/* Footer */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-center text-[10px] sm:text-xs text-green-600 mt-6"
           >
-            Continuar al Dashboard
-          </motion.button>
-        )}
+            © 2026 BioTech Farm Management. Todos los derechos reservados.
+          </motion.p>
 
-        {/* Footer */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-center text-green-600 mt-6"
-        >
-          © 2024 BioTech Farm Management. Todos los derechos reservados.
-        </motion.p>
+          {/* ── Modals ─────────────────────────────────────────────────── */}
+          <CreateFarmModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onSubmit={handleCreateFarmSubmit}
+          />
 
-        {/* Create Farm Modal */}
-        <CreateFarmModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSubmit={handleCreateFarmSubmit}
-        />
-      </motion.div>
-    </div>
+          <EditFarmModal
+            isOpen={!!editingFarm}
+            farm={editingFarm}
+            onClose={() => setEditingFarm(null)}
+            onUpdate={handleUpdateFarm}
+            onDelete={handleDeleteFarm}
+          />
+        </motion.div>
+      </div>
+    </>
   );
 }
