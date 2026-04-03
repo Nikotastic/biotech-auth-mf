@@ -1,20 +1,16 @@
-import apiService from "@shared-services/ApiService";
+import apiClient from "@shared/utils/apiClient";
 
+/**
+ * Farm Service — Full CRUD
+ * Base: /api/v1/farms  (FarmsController uses explicit [Route("api/v1/farms")])
+ */
 export const farmService = {
+  // ── GET /api/v1/farms/tenant/{userId} ─────────────────────────────────────
   async getUserFarms(token, userIdArg, includeInactive = false) {
     let userId = userIdArg;
-    // If token is explicitly passed, verify headers, otherwise apiClient handles it
-    const config = token
-      ? {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      : {};
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
     if (!userId) {
-      console.warn("getUserFarms: No userId provided via arguments");
-      // Fallback: try to get from localStorage if not provided
       try {
         const stored = localStorage.getItem("auth-storage");
         if (stored) {
@@ -26,12 +22,8 @@ export const farmService = {
       }
     }
 
-    if (!userId) {
-      throw new Error("User ID is required to fetch farms");
-    }
+    if (!userId) throw new Error("User ID is required to fetch farms");
 
-    // Official endpoint: /api/v1/farms/tenant/{userId}
-    // Since apiClient already has /api, we just add /v1/farms/tenant/{userId}
     const finalUrl = `/v1/farms/tenant/${userId}?includeInactive=${includeInactive}`;
     console.log(`📡 Fetching farms from URL: ${finalUrl}`);
 
@@ -43,24 +35,46 @@ export const farmService = {
     if (Array.isArray(data?.data)) return data.data;
     if (Array.isArray(data?.data?.farms)) return data.data.farms;
     if (Array.isArray(data?.items)) return data.items;
-    
     return [];
   },
 
-  async createFarm(farmData) {
-    // POST /api/v1/Farms
-    const response = await apiService.post("/v1/Farms", farmData);
-    // Backend returns ApiResponse<FarmResponse> = { success, data: {...}, message }
+  // ── GET /api/v1/farms/mine ────────────────────────────────────────────────
+  async getMyFarms(includeInactive = false) {
+    const response = await apiClient.get(`/v1/farms/mine?includeInactive=${includeInactive}`);
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.farms)) return data.farms;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  },
+
+  // ── GET /api/v1/farms/{id} ────────────────────────────────────────────────
+  async getFarmById(id) {
+    if (!id) throw new Error("Farm ID is required");
+    const response = await apiClient.get(`/v1/farms/${id}`);
     return response.data?.data || response.data;
   },
 
-  async getFarmById(farmId) {
-    // GET /api/v1/Farms/{id}
-    if (!farmId) {
-      throw new Error("Farm ID is required");
-    }
-    const response = await apiService.get(`/v1/Farms/${farmId}`);
-    // Backend returns ApiResponse<FarmResponse> = { success, data: {...}, message }
+  // ── POST /api/v1/farms ────────────────────────────────────────────────────
+  async createFarm(farmData) {
+    console.log("🚀 Creating farm with payload:", farmData);
+    const response = await apiClient.post("/v1/farms", farmData);
     return response.data?.data || response.data;
   },
+
+  // ── PUT /api/v1/farms/{id} ────────────────────────────────────────────────
+  async updateFarm(id, farmData) {
+    console.log(`✏️ Updating farm ${id} with payload:`, farmData);
+    const response = await apiClient.put(`/v1/farms/${id}`, farmData);
+    return response.data?.data || response.data;
+  },
+
+  // ── DELETE /api/v1/farms/{id} ─────────────────────────────────────────────
+  async deleteFarm(id) {
+    console.log(`🗑️ Deleting farm ${id}`);
+    const response = await apiClient.delete(`/v1/farms/${id}`);
+    return response.data;
+  },
 };
+
+export default farmService;

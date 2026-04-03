@@ -41,14 +41,23 @@ apiClient.interceptors.request.use(
       const selectedFarm = authState.selectedFarm;
       if (selectedFarm && selectedFarm.id) {
         // Enviar como Header (estándar para microservicios)
-        config.headers["X-Farm-Id"] = selectedFarm.id;
+        // Solo inyectar si no se está forzando un encabezado específico (ej. en FarmSelector)
+        if (!config.headers["X-Farm-Id"]) {
+           config.headers["X-Farm-Id"] = selectedFarm.id;
+        }
 
         // Opcional: Inyectar también en los params si es una petición GET
         if (config.method === "get") {
-          config.params = {
-            ...config.params,
-            farmId: selectedFarm.id,
-          };
+          // Verificar que el farmId no venga ya explícito en la URL o params
+          const urlHasFarmId = config.url && config.url.includes("farmId=");
+          const paramsHasFarmId = config.params && config.params.farmId !== undefined;
+          
+          if (!urlHasFarmId && !paramsHasFarmId) {
+            config.params = {
+              ...config.params,
+              farmId: selectedFarm.id,
+            };
+          }
         }
       }
     }
