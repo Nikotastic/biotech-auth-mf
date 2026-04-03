@@ -40,9 +40,13 @@ export default function Dashboard() {
   }, [selectedFarm?.id]);
 
   const handleLogout = () => {
-    logout();
-    // The store now handles the event dispatch
-    window.location.href = "/";
+    alertService.success("¡Hasta pronto!", "Sesión Cerrada");
+    setTimeout(() => {
+      logout();
+      // Notify authentication change to sync
+      window.dispatchEvent(new Event("auth-change"));
+      window.location.href = "/";
+    }, 500);
   };
 
   const modules = [

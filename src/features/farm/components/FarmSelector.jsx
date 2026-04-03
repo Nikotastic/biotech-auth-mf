@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@shared/store/authStore";
-import { useToastStore } from "@shared/store/toastStore";
-import { ToastContainer } from "@shared/components/ui/ToastContainer";
+import alertService from "@shared/utils/alertService";
 import { farmService } from "../services/farmService";
 import { CreateFarmModal } from "./CreateFarmModal";
 import { EditFarmModal } from "./EditFarmModal";
@@ -133,7 +132,7 @@ export default function FarmSelector() {
       addToast(`✅ Granja "${farm.name}" seleccionada correctamente`, "success");
       navigate("/dashboard");
     } else {
-      addToast("❌ Error al seleccionar la granja", "error");
+      alertService.error("Error al seleccionar la granja", "Error");
     }
   };
 
@@ -219,26 +218,51 @@ export default function FarmSelector() {
   }
 
   return (
-    <>
-      <ToastContainer />
-      <div className="min-h-screen bg-background transition-colors duration-300 flex items-center justify-center p-3 sm:p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-5xl px-1 sm:px-0"
-        >
-          {/* Header */}
-          <div className="text-center mb-6 sm:mb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center shadow-lg"
-            >
-              <Building2 className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-            </motion.div>
-            <motion.h1
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-5xl"
+      >
+        {/* Header */}
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring" }}
+            className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
+          >
+            <Building2 className="w-10 h-10 text-white" />
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-3xl font-bold text-green-900 mb-2"
+          >
+            {farms.length > 0
+              ? "Selecciona tu Granja"
+              : "Comenzar con BioTech Farm"}
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-green-600"
+          >
+            {farms.length > 0
+              ? "Elige la granja que deseas gestionar hoy"
+              : "Parece que aún no tienes granjas registradas. ¡Crea la primera!"}
+          </motion.p>
+        </div>
+
+        {/* Farms Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {farms.map((farm, index) => (
+            <motion.button
+              key={farm.id}
+              onClick={() => handleSelect(farm.id)}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -252,11 +276,16 @@ export default function FarmSelector() {
               transition={{ delay: 0.4 }}
               className="text-sm sm:text-base text-green-600 px-4"
             >
-              {farms.length > 0
-                ? "Elige la granja que deseas gestionar hoy"
-                : "Parece que aún no tienes granjas registradas. ¡Crea la primera!"}
-            </motion.p>
-          </div>
+              {/* Selected Indicator */}
+              {selectedFarmLocal === farm.id && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
+                >
+                  <Check className="w-5 h-5 text-white" />
+                </motion.div>
+              )}
 
           {/* Search and Action Bar */}
           <div className="mb-10 max-w-4xl mx-auto flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">

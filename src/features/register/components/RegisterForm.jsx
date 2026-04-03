@@ -16,14 +16,13 @@ import {
 import { motion } from "framer-motion";
 import { useRegister } from "../hooks/useRegister";
 import { registerSchema } from "../validations/registerSchema";
-import { useToastStore } from "@shared/store/toastStore";
+import alertService from "@shared/utils/alertService";
 
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { register: registerUser, loading, error } = useRegister();
-  const addToast = useToastStore((state) => state.addToast);
 
   const {
     register,
@@ -40,7 +39,7 @@ export default function RegisterForm() {
   const onSubmit = async (data) => {
     try {
       await registerUser(data);
-      addToast("¡Registro exitoso! Bienvenido a BioTech Farm.", "success");
+      alertService.success("Bienvenido a BioTech Farm", "¡Registro exitoso!");
 
       // Redirect after successful registration
       navigate("/farm-selector");
@@ -99,7 +98,7 @@ export default function RegisterForm() {
           "Error desconocido al registrar usuario";
       }
 
-      addToast(errorMessage, "error");
+      alertService.error(errorMessage, "Error de Registro");
     }
   };
 

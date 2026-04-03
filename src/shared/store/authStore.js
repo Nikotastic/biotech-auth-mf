@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { tokenManager } from "@shared/utils/tokenManager";
 
 /**
@@ -13,12 +13,14 @@ export const useAuthStore = create(
       token: null,
       isAuthenticated: false,
       selectedFarm: null,
+      _hasHydrated: false,
 
-      /**
-       * Establece la autenticación del usuario
-       * @param {object} user - Datos del usuario
-       * @param {string} token - Token JWT
-       */
+      setHasHydrated: (state) => {
+        set({
+          _hasHydrated: state,
+        });
+      },
+
       setAuth: (user, token) => {
         // Validar que el token no esté expirado antes de guardarlo
         if (tokenManager.isTokenExpired(token)) {
@@ -30,33 +32,25 @@ export const useAuthStore = create(
         // Guardar en cookies usando tokenManager
         tokenManager.setToken(token);
 
-        set({
-          user,
-          token,
-          isAuthenticated: true,
-        });
+        set({ user, token, isAuthenticated: true });
 
         // Notify environment of authentication change
         if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("auth:login", { detail: { user, token } }),
+          );
           window.dispatchEvent(new Event("auth-change"));
         }
-
-        console.log("✅ Authentication set successfully");
       },
 
-      /**
-       * Establece la granja seleccionada
-       * @param {object} farm - Datos de la granja
-       */
       setSelectedFarm: (farm) => {
-        console.log("💾 Persisting selected farm:", farm);
-        set({
-          selectedFarm: farm,
-        });
+        set({ selectedFarm: farm });
 
-        // Notify environment of preference change
         if (typeof window !== "undefined") {
-          // Guardar una copia extra en localStorage para mayor seguridad si el middleware falla
+          window.dispatchEvent(
+            new CustomEvent("farm:selected", { detail: { farm } }),
+          );
+
           try {
             const authStorage = JSON.parse(
               localStorage.getItem("auth-storage") || "{}",
@@ -73,10 +67,6 @@ export const useAuthStore = create(
         }
       },
 
-      /**
-       * Verifica si el token actual es válido
-       * @returns {boolean} true si el token es válido
-       */
       isTokenValid: () => {
         const { token } = get();
         if (!token) return false;
@@ -92,19 +82,11 @@ export const useAuthStore = create(
         return isValid;
       },
 
-      /**
-       * Obtiene el payload del token actual
-       * @returns {object|null} Payload del token
-       */
       getTokenPayload: () => {
         const { token } = get();
         return tokenManager.decodeToken(token);
       },
 
-      /**
-       * Sincroniza el token desde cookies al store
-       * Útil para recuperar sesión después de recargar la página
-       */
       syncTokenFromCookies: () => {
         const cookieToken = tokenManager.getToken();
         const { token: storeToken } = get();
@@ -133,12 +115,9 @@ export const useAuthStore = create(
         }
       },
 
-      /**
-       * Cierra la sesión del usuario
-       * Limpia todo el estado y las cookies
-       */
       logout: () => {
-        // Limpiar el estado
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+
         set({
           user: null,
           token: null,
@@ -146,24 +125,21 @@ export const useAuthStore = create(
           selectedFarm: null,
         });
 
-        // Eliminar del localStorage
         localStorage.removeItem("auth-storage");
-
-        // Limpiar cookies usando tokenManager
         tokenManager.clearAuth();
 
-        // Notify environment of logout
+        document.cookie.split(";").forEach((cookie) => {
+          const eqPos = cookie.indexOf("=");
+          const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+          document.cookie =
+            name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        });
+
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("auth-change"));
         }
-
-        console.log("✅ Logout successful");
       },
 
-      /**
-       * Actualiza los datos del usuario sin cambiar el token
-       * @param {object} userData - Datos actualizados del usuario
-       */
       updateUser: (userData) => {
         const { user } = get();
         set({
@@ -173,15 +149,14 @@ export const useAuthStore = create(
     }),
     {
       name: "auth-storage",
-      // Función para sincronizar después de hidratar desde localStorage
+      storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Verificar validez del token después de hidratar
+          state.setHasHydrated(true);
           if (state.token && tokenManager.isTokenExpired(state.token)) {
             console.warn("Stored token expired, clearing auth state");
             state.logout();
           } else if (state.token) {
-            // Sincronizar token válido a cookies
             tokenManager.setToken(state.token);
           }
         }
@@ -190,15 +165,10 @@ export const useAuthStore = create(
   ),
 );
 
-/**
- * Inicializar sincronización de tokens al cargar el módulo
- */
 if (typeof window !== "undefined") {
-  // Sincronizar token desde cookies al cargar
   const store = useAuthStore.getState();
   store.syncTokenFromCookies();
 
-  // Verificar validez del token periódicamente (cada 5 minutos)
   setInterval(
     () => {
       const currentStore = useAuthStore.getState();
@@ -207,5 +177,5 @@ if (typeof window !== "undefined") {
       }
     },
     5 * 60 * 1000,
-  ); // 5 minutos
+  );
 }

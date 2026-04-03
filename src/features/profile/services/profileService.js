@@ -1,6 +1,7 @@
-import apiClient from "@shared/utils/apiClient";
+import apiService from "@shared-services/ApiService";
 
 export const profileService = {
+  // GET /api/Auth/profile - Get the authenticated user's profile
   getProfile: async () => {
     const response = await apiClient.get("/v1/auth/profile");
     return response.data;
@@ -11,3 +12,5 @@ export const profileService = {
     return response.data;
   },
 };
+
+export default profileService;
